@@ -1,0 +1,9 @@
+Package: wg-peer
+Version: 1.0.0
+Section: net
+Priority: optional
+Architecture: all
+Depends: bash, wireguard-tools
+Maintainer: Your Name <your@email.com>
+Description: Command-line tool to manage WireGuard peers
+ A minimal script to add/remove/list WireGuard peers and rebuild the wg0 config.
