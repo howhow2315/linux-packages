@@ -1,1 +1,0 @@
-Hey there this are my personal linux packages that i'm using for one thing or another.
