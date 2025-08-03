@@ -20,12 +20,14 @@ echo "[*] $(date)"
 
 # Update system packages
 echo "[*] Updating official packages..."
-pacman -Syu --noconfirm
+pacman -Syu --noconfirm || echo "[o] No AUR updates available."
+echo "[o] Official packages are up to date."
 
-orphans=$(pacman -Qtdq)
+orphans=$(pacman -Qtdq || true)
 if [[ -n "$orphans" ]]; then
     echo "[*] Removing orphaned packages..."
     pacman -Rns $orphans
+    echo "[o] Removed orphaned packages."
 else
     echo "[o] No orphaned packages found."
 fi
@@ -36,7 +38,8 @@ update_aur() {
     for aur_helper in yay paru; do
         if command -v "$aur_helper" &>/dev/null; then
             echo "[*] Updating AUR packages with $aur_helper..."
-            sudo -u "$user" "$aur_helper" -Syu --noconfirm
+            sudo -u "$user" "$aur_helper" -Syu --noconfirm || echo "[o] No AUR updates available."
+            echo "[o] Updating AUR packages."
             return
         fi
     done
@@ -79,10 +82,10 @@ else
     echo "[*] Reflector not installed. Skipping mirrorlist update."
 fi
 
-echo "[o] System maintenance completed."
-
 # Cleanup old logs (older than 7 days)
 echo "[*] Cleaning up old logs..."
 find "$LOG_DIR" -type f -mtime +7 -name "*.log" -exec rm -f {} \;
 
 echo "[o] Old logs cleaned."
+
+echo "[o] System maintenance completed at $(date)."
