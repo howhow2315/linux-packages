@@ -23,6 +23,8 @@ echo "[*] Updating official packages..."
 pacman -Syu --noconfirm || echo "[o] No AUR updates available."
 echo "[o] Official packages are up to date."
 
+# Cleanup orphans
+echo "[*] Checking for orphaned packages..."
 orphans=$(pacman -Qtdq || true)
 if [[ -n "$orphans" ]]; then
     echo "[*] Removing orphaned packages..."
@@ -32,13 +34,18 @@ else
     echo "[o] No orphaned packages found."
 fi
 
+# Cleanup cache
+echo "[*] Cleaning package cache..."
+paccache -r
+echo "[o] Cache cleaned."
+
 # If an AUR helper is available, use it to update AUR packages
 update_aur() {
     local user="${SUDO_USER:-$(logname)}"
     for aur_helper in yay paru; do
         if command -v "$aur_helper" &>/dev/null; then
             echo "[*] Updating AUR packages with $aur_helper..."
-            sudo -u "$user" "$aur_helper" -Syu --noconfirm || echo "[o] No AUR updates available."
+            su - "$user" -c "$aur_helper -Syu --noconfirm || echo '[o] No AUR updates available.'"
             echo "[o] Updating AUR packages."
             return
         fi

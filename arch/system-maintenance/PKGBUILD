@@ -1,11 +1,11 @@
 pkgname=system-maintenance
-pkgver=1.0.3
+pkgver=1.0.4
 pkgrel=1
 pkgdesc="Daily Arch Linux system maintenance script with systemd timer"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
-depends=('coreutils' 'findutils' 'systemd' 'pacman')
+depends=('coreutils' 'findutils' 'systemd' 'pacman' 'pacman-contrib')
 optdepends=(
   'yay: AUR helper for updating AUR packages'
   'paru: Alternative AUR helper'
@@ -21,7 +21,7 @@ source=(
   'system-maintenance.timer'
   'system-maintenance.install'
 )
-sha256sums=('4f5dd36cda6cdcf13e0595748b3fa1d28fccbaeb46c275591e61efbba26b0830'
+sha256sums=('de4f393cfc5687b06d801d4e447b7694bd2bd96589678d0e18aec84a4ceebfba'
             'fc81918fcfe9151508707b72c1747183157c8c97323755fa43dfca5e989a0b3d'
             '2d7c3645e05009a54cb967782b59924cd0aa0d0277f78bbd1b0c0322536676f7'
             '35354287eb6cde1751b4582bbe66393766dda552934ce8fde46a69ee13030653')
