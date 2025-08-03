@@ -1,7 +1,11 @@
 #!/bin/bash
 # Arch Linux System Maintenance Script
-
 set -euo pipefail
+
+if [[ $EUID -ne 0 ]]; then
+    echo "[x] Please run $(basename "$0") as root."
+    exit 1
+fi
 
 LOG_DIR="/var/log/sys-maintenance"
 LOG_FILE="$LOG_DIR/$(date +'%Y-%m-%d').log"

@@ -4,3 +4,9 @@ Description=Run Arch system maintenance script
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/system-maintenance
+User=root
+PrivateTmp=yes
+ProtectHome=yes
+
+[Install]
+WantedBy=timers.target
