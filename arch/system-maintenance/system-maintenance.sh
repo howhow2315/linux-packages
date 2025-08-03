@@ -30,16 +30,19 @@ else
     echo "[o] No orphaned packages found."
 fi
 
-# If yay or paru is installed, update AUR packages too
-if command -v yay &>/dev/null; then
-    echo "[*] Updating AUR packages with yay..."
-    yay -Syu --noconfirm
-elif command -v paru &>/dev/null; then
-    echo "[*] Updating AUR packages with paru..."
-    paru -Syu --noconfirm
-else
+# If an AUR helper is available, use it to update AUR packages
+update_aur() {
+    local user="${SUDO_USER:-$(logname)}"
+    for aur_helper in yay paru; do
+        if command -v "$aur_helper" &>/dev/null; then
+            echo "[*] Updating AUR packages with $aur_helper..."
+            sudo -u "$user" "$aur_helper" -Syu --noconfirm
+            return
+        fi
+    done
     echo "[*] No AUR helper found. Skipping AUR updates."
-fi
+}
+update_aur
 
 # Check for critical journal errors (priority 3 or higher) since last boot
 echo "[*] Checking critical errors from journal..."

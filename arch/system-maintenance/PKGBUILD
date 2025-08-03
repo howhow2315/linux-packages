@@ -1,5 +1,5 @@
 pkgname=system-maintenance
-pkgver=1.0.1
+pkgver=1.0.2
 pkgrel=1
 pkgdesc="Daily Arch Linux system maintenance script with systemd timer"
 arch=('any')
@@ -21,7 +21,7 @@ source=(
   'system-maintenance.timer'
   'system-maintenance.install'
 )
-sha256sums=('6cc7ad51e85f5bc3598eb3e28f2ede9d3637191fe9401e8911a0b464c8ceb499'
+sha256sums=('d6dba9f1e604d6e416493591e08f2261d21294be04f89b348740813b501bd8d8'
             'fc81918fcfe9151508707b72c1747183157c8c97323755fa43dfca5e989a0b3d'
             '2d7c3645e05009a54cb967782b59924cd0aa0d0277f78bbd1b0c0322536676f7'
             '35354287eb6cde1751b4582bbe66393766dda552934ce8fde46a69ee13030653')
