@@ -3,17 +3,18 @@
 set -e
 
 if [[ $EUID -ne 0 ]]; then
-    echo "[x] Please run $0 as root."
+    echo "[x] Please run $(basename "$0") as root."
     exit 1
 fi
 
 CONFIG_FILE="/etc/NetworkManager/conf.d/mac-spoof.conf"
 
 print_status() {
+    echo
     if [[ -f "$CONFIG_FILE" ]] && grep -q "# MAC Spoofing: ENABLED" "$CONFIG_FILE"; then
-        echo "  [*] MAC Spoofing is ENABLED"
+        echo "[*] MAC Spoofing is currently ENABLED"
     else
-        echo "  [*] MAC Spoofing is DISABLED"
+        echo "[*] MAC Spoofing is currently DISABLED"
     fi
 }
 
