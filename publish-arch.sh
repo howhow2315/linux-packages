@@ -18,6 +18,10 @@ mkdir -p docs
 # Build packages
 cd arch
 for dir in */ ; do
+    if [[ ! -f "$dir/PKGBUILD" ]]; then
+        echo "[!] Missing PKGBUILD in $dir, skipping..."
+        continue
+    fi
     cd "$dir"
 
     # Read current version and release
