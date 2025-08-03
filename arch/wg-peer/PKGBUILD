@@ -8,7 +8,7 @@ license=('MIT')
 depends=('bash' 'wireguard-tools')
 optdepends=('qrencode: optional QR code output for mobile clients')
 source=("wg-peer.sh")
-md5sums=('SKIP')  # change to real checksum later if desired
+md5sums=('ddada89f1a3289a9f7232362eed12ba7')
 
 package() {
   install -Dm755 wg-peer.sh "$pkgdir/usr/bin/wg-peer"

@@ -7,7 +7,7 @@ url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'base-devel' 'git')
 source=("aur-install.sh")
-md5sums=('SKIP')  # change to real checksum later if desired
+md5sums=('2ac24cc12ddee3eb1324c15659748dd1')
 
 package() {
   install -Dm755 aur-install.sh "$pkgdir/usr/bin/aur-install"
