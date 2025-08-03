@@ -1,0 +1,17 @@
+post_install() {
+  echo "[*] Enabling system-maintenance.timer..."
+  systemctl daemon-reload
+  systemctl enable --now system-maintenance.timer
+  echo "[o] Enabled system-maintenance.timer"
+}
+
+pre_remove() {
+  echo "[*] Disabling system-maintenance.timer..."
+  systemctl disable --now system-maintenance.timer
+  echo "[o] Disabled system-maintenance.timer"
+}
+
+post_remove() {
+  echo "[*] Cleaning up leftover systemd state..."
+  systemctl daemon-reload
+}

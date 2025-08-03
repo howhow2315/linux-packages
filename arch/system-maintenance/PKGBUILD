@@ -1,0 +1,33 @@
+pkgname=system-maintenance
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Daily Arch Linux system maintenance script with systemd timer"
+arch=('any')
+url="https://github.com/howhow2315/linux-packages"
+license=('MIT')
+depends=('coreutils' 'findutils' 'systemd' 'pacman')
+optdepends=(
+  'yay: AUR helper for updating AUR packages'
+  'paru: Alternative AUR helper'
+  'rkhunter: Rootkit scanner'
+  'chkrootkit: Another rootkit scanner'
+  'fail2ban: Ban brute-force attacks and monitor login attempts'
+  'reflector: Automatically update pacman mirrorlist'
+)
+install=system-maintenance.install
+source=(
+  'system-maintenance.sh'
+  'system-maintenance.service'
+  'system-maintenance.timer'
+  'system-maintenance.install'
+)
+sha256sums=('d51461acf3a82604c8046c77f1b81adf2440ba2ed4a497fa6e641198cf5a5c74'
+            '4eb31bf568cdedd32b6eff9068ed639eca3f47438a41798c68c96461a45efcdc'
+            '2d7c3645e05009a54cb967782b59924cd0aa0d0277f78bbd1b0c0322536676f7'
+            '35354287eb6cde1751b4582bbe66393766dda552934ce8fde46a69ee13030653')
+
+package() {
+  install -Dm755 system-maintenance.sh "$pkgdir/usr/bin/system-maintenance"
+  install -Dm644 system-maintenance.service "$pkgdir/usr/lib/systemd/system/system-maintenance.service"
+  install -Dm644 system-maintenance.timer "$pkgdir/usr/lib/systemd/system/system-maintenance.timer"
+}

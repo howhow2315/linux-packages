@@ -1,0 +1,6 @@
+[Unit]
+Description=Run Arch system maintenance script
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/system-maintenance

@@ -1,5 +1,5 @@
 pkgname=aur-install
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Command-line tool to easily make packages from https://aur.archlinux.org/package.git"
 arch=('any')
