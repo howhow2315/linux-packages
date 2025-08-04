@@ -18,6 +18,14 @@ echo "[*] Starting system maintenance..."
 # Log date and time
 echo "[*] $(date)"
 
+# Refresh mirrorlist using reflector (if installed)
+if command -v reflector &>/dev/null; then
+    echo "[*] Updating mirrorlist with reflector..."
+    reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+else
+    echo "[*] Reflector not installed. Skipping mirrorlist update."
+fi
+
 # Update system packages
 echo "[*] Updating official packages..."
 pacman -Syu --noconfirm || echo "[o] No AUR updates available."
@@ -79,14 +87,6 @@ fi
 if systemctl is-active --quiet fail2ban; then
     echo "[*] Fail2Ban status:"
     fail2ban-client status
-fi
-
-# Refresh mirrorlist using reflector (if installed)
-if command -v reflector &>/dev/null; then
-    echo "[*] Updating mirrorlist with reflector..."
-    reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
-else
-    echo "[*] Reflector not installed. Skipping mirrorlist update."
 fi
 
 # Cleanup old logs (older than 7 days)
