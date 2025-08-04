@@ -49,7 +49,7 @@ for package in "${packages[@]}"; do
     fi
 
     # Clean up and install
-    tmpdir="/tmp/aur-install:$package"
+    tmpdir="/tmp/aur-install-$package"
     [[ -d "$tmpdir" ]] && rm -rf "$tmpdir"
     
     git clone "https://aur.archlinux.org/$package.git" "$tmpdir" || {

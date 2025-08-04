@@ -1,0 +1,17 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+WorkingDirectory="%u/.wg-toggle/bin"
+Type=Application
+Name=WireGuard Toggle
+Comment=Toggle WireGuard interfaces
+Exec=$XDG_DATA_HOME/bin/wg-toggle
+ExecName[default]=Toggle VPN
+Exec2=$XDG_DATA_HOME/bin/wg-toggle on
+ExecName[on]=Enable VPN
+Exec3=$XDG_DATA_HOME/bin/wg-toggle off
+ExecName[off]=Disable VPN
+Icon=$XDG_DATA_HOME/icons/wireguard.svg
+Path=$XDG_DATA_HOME/bin
+Terminal=false
+StartupNotify=true
+Categories=Network;Wireless;VPN;

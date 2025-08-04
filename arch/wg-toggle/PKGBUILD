@@ -1,0 +1,14 @@
+pkgname=wg-toggle
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Command-line tool & .desktop to easily toggle WireGuard interfaces"
+arch=('any')
+url="https://github.com/howhow2315/linux-packages"
+license=('MIT')
+depends=('bash' 'wireguard-tools')
+source=("wg-toggle.sh")
+md5sums=('ddada89f1a3289a9f7232362eed12ba7')
+
+package() {
+  install -Dm755 wg-toggle.sh "$pkgdir/usr/bin/wg-toggle"
+}
