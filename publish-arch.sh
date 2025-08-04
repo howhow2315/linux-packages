@@ -11,6 +11,7 @@ if [[ "$(basename "$PWD")" != "$GIT_REPO" ]]; then
     exit 1
 fi
 
+# We should be only clearing out the packages we want to update
 # Ensure docs
 rm -rf docs
 mkdir -p docs

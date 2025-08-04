@@ -7,7 +7,7 @@ url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'wireguard-tools')
 source=("wg-toggle.sh")
-md5sums=('ddada89f1a3289a9f7232362eed12ba7')
+md5sums=('8d64a33622b4b157fb526cfc18fd7515')
 
 package() {
   install -Dm755 wg-toggle.sh "$pkgdir/usr/bin/wg-toggle"
