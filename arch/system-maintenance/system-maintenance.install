@@ -1,14 +1,28 @@
 post_install() {
-  echo "[*] Enabling system-maintenance.timer..."
-  systemctl daemon-reload
-  systemctl enable --now system-maintenance.timer
-  echo "[o] Enabled system-maintenance.timer"
+    echo "[*] Optional: Enable automatic system maintenance timer (via systemd)"
+
+    if [ -t 0 ]; then
+        read -rp "Enable timer now? [y/N]: " response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            systemctl enable --now system-maintenance.timer
+            echo "[*] Timer enabled and started."
+        else
+            echo "[*] Skipping timer enable. You can do it later with:"
+            echo "    systemctl enable --now system-maintenance.timer"
+        fi
+    else
+        echo "[*] Non-interactive install detected (e.g. using --noconfirm)."
+        echo "[*] Skipping prompt. You can enable the timer manually later via:"
+        echo "    systemctl enable --now system-maintenance.timer"
+    fi
 }
 
 pre_remove() {
-  echo "[*] Disabling system-maintenance.timer..."
-  systemctl disable --now system-maintenance.timer
-  echo "[o] Disabled system-maintenance.timer"
+  if systemctl is-active --quiet system-maintenance.timer; then
+    echo "[*] Disabling system-maintenance.timer..."
+    systemctl disable --now system-maintenance.timer
+    echo "[o] Disabled system-maintenance.timer"
+  fi
 }
 
 post_remove() {

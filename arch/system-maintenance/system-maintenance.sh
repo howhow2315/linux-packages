@@ -2,9 +2,17 @@
 # Arch Linux System Maintenance Script
 set -euo pipefail
 
+# Detect if running as root
 if [[ $EUID -ne 0 ]]; then
     echo "[x] Please run $(basename "$0") as root."
     exit 1
+fi
+
+# Detect if running interactively or by service
+if [[ -n "${SYSTEMD_INVOCATION_ID-}" || ! -t 0 ]]; then
+    INTERACTIVE=false
+else
+    INTERACTIVE=true
 fi
 
 LOG_DIR="/var/log/sys-maintenance"
@@ -20,8 +28,18 @@ echo "[*] $(date)"
 
 # Refresh mirrorlist using reflector (if installed)
 if command -v reflector &>/dev/null; then
-    echo "[*] Updating mirrorlist with reflector..."
-    reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    timestamp=$(grep '^# When:' /etc/pacman.d/mirrorlist | cut -d ':' -f2- | xargs)
+    elapsed=$(( $(date -u +%s) - $(date -d "$timestamp" +%s) ))
+    echo "Reflector last ran $elapsed seconds ago"
+
+    two_hours=7200
+    if (( elapsed > two_hours )); then
+        # echo "[*] Reflector ran more than 2 hours ago."
+        echo "[*] Updating mirrorlist with reflector..."
+        reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+    else
+        echo "*] Reflector ran less than 2 hours ago. Skipping..."
+    fi
 else
     echo "[*] Reflector not installed. Skipping mirrorlist update."
 fi
@@ -31,62 +49,105 @@ echo "[*] Updating official packages..."
 pacman -Syu --noconfirm || echo "[o] No AUR updates available."
 echo "[o] Official packages are up to date."
 
-# Cleanup orphans
-echo "[*] Checking for orphaned packages..."
-orphans=$(pacman -Qtdq || true)
-if [[ -n "$orphans" ]]; then
-    echo "[*] Removing orphaned packages..."
-    pacman -Rns $orphans
-    echo "[o] Removed orphaned packages."
-else
-    echo "[o] No orphaned packages found."
-fi
-
 # Cleanup cache
 echo "[*] Cleaning package cache..."
-paccache -r
-echo "[o] Cache cleaned."
+paccache -rk2 && echo "[o] Cache cleaned." || echo "[!] Failed to clean cache"
 
 # If an AUR helper is available, use it to update AUR packages
 update_aur() {
-    local user="${SUDO_USER:-$(logname)}"
+    local user="$1"
     for aur_helper in yay paru; do
-        if command -v "$aur_helper" &>/dev/null; then
-            echo "[*] Updating AUR packages with $aur_helper..."
-            su - "$user" -c "$aur_helper -Syu --noconfirm || echo '[o] No AUR updates available.'"
-            echo "[o] Updating AUR packages."
+        if sudo -u "$user" command -v "$aur_helper" &>/dev/null; then
+            echo "[*] Updating AUR packages for user $user with $aur_helper..."
+            sudo -u "$user" "$aur_helper" -Syu --noconfirm || echo "[o] No AUR updates available for $user."
+            echo "[o] Finished updating AUR packages for $user."
             return
         fi
     done
-    echo "[*] No AUR helper found. Skipping AUR updates."
+    echo "[*] No AUR helper found for $user. Skipping..."
 }
-update_aur
 
-# Check for critical journal errors (priority 3 or higher) since last boot
-echo "[*] Checking critical errors from journal..."
-journalctl --quiet -p 3 -b || echo "[o] No critical errors found."
-
-# List failed systemd services
-echo "[*] Checking for failed systemd services..."
-systemctl --failed || echo "[o] No failed services."
-
-# Run rootkit hunter
-if command -v rkhunter &>/dev/null; then
-    echo "[*] Running rkhunter..."
-    rkhunter --update
-    rkhunter --cronjob --report-warnings-only
+if $INTERACTIVE; then
+    update_aur "${SUDO_USER:-$(logname)}"
+else
+    echo "[*] Updating AUR packages for all users with AUR helpers..."
+    users=$(awk -F: '($3 >= 1000) && ($7 !~ /(nologin|false)$/) {print $1}' /etc/passwd)
+    for user in $users; do
+        echo "[*] Processing user: $user"
+        update_aur "$user"
+    done
 fi
 
-# Run chkrootkit
-if command -v chkrootkit &>/dev/null; then
-    echo "[*] Running chkrootkit..."
-    chkrootkit
-fi
+if $INTERACTIVE; then
+    # Cleanup orphans
+    echo "[*] Checking for non-opt orphaned packages..."
 
-# Fail2Ban status check
-if systemctl is-active --quiet fail2ban; then
-    echo "[*] Fail2Ban status:"
-    fail2ban-client status
+    orphans=$(pacman -Qtdq || true)
+    safe_orphans=()
+
+    for pkg in $orphans; do
+        # Check if pkg is required or optional dependency of any installed package
+        if ! pacman -Qi | awk -v pkg="$pkg" '
+            BEGIN {found=0}
+            /^Name/ {name=$3}
+            /^Depends On/ {deps=$0}
+            /^Optional Deps/ {optdeps=$0}
+            /^$/ {
+                if (deps ~ pkg || optdeps ~ pkg) found=1
+                deps=""; optdeps=""
+            }
+            END {exit !found}
+        '; then
+            safe_orphans+=("$pkg")
+        fi
+    done
+
+    if [[ ${#safe_orphans[@]} -gt 0 ]]; then
+        echo "[*] Non-opt orphaned packages:"
+        echo
+        printf '%s\n' "${safe_orphans[@]}"
+        echo
+        read -rp "Remove these packages? [y/N] " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            pacman -Rns --noconfirm "${safe_orphans[@]}"
+        else
+            echo "[o] Aborted."
+        fi
+    else
+        echo "[o] No removable non-opt orphans found."
+    fi
+
+    # Run rootkit hunter
+    if command -v rkhunter &>/dev/null; then
+        echo
+        echo "[*] Running rkhunter..."
+        rkhunter --update 2>&1 | grep -vE 'egrep: warning|is obsolescent' # rkhunter uses egrep which is outdate; and using it obnoxiously prompts `egrep: warning: egrep is obsolescent; please use grep -E instead.` numerous times.
+        rkhunter --cronjob --report-warnings-only
+    fi
+
+    # Run chkrootkit
+    if command -v chkrootkit &>/dev/null; then
+        echo
+        echo "[*] Running chkrootkit..."
+        chkrootkit
+    fi
+
+    # Check for critical journal errors (priority 3 or higher) since last boot
+    echo
+    echo "[*] Checking critical errors from journal..."
+    journalctl --quiet -p 3 -b || echo "[o] No critical errors found."
+
+    # List failed systemd services
+    echo
+    echo "[*] Checking for failed systemd services..."
+    systemctl --failed || echo "[o] No failed services."
+
+    # Fail2Ban status check
+    if systemctl is-active --quiet fail2ban; then
+        echo
+        echo "[*] Fail2Ban status:"
+        fail2ban-client status
+    fi
 fi
 
 # Cleanup old logs (older than 7 days)
