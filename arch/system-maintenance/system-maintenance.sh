@@ -121,7 +121,7 @@ if $INTERACTIVE; then
     if command -v rkhunter &>/dev/null; then
         echo
         echo "[*] Running rkhunter..."
-        rkhunter --update 2>&1 | grep -vE 'egrep: warning|is obsolescent' # rkhunter uses egrep which is outdate; and using it obnoxiously prompts `egrep: warning: egrep is obsolescent; please use grep -E instead.` numerous times.
+        rkhunter --update 2>&1 | grep -vE 'egrep: warning: egrep is obsolescent; using grep -E' # rkhunter uses egrep which is outdate; and using it obnoxiously prompts `egrep: warning: egrep is obsolescent; please use grep -E instead.` numerous times.
         rkhunter --cronjob --report-warnings-only
     fi
 
