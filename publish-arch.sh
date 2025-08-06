@@ -11,16 +11,26 @@ if [[ "$(basename "$PWD")" != "$GIT_REPO" ]]; then
     exit 1
 fi
 
-# We should be only clearing out the packages we want to update
-# Ensure docs
-rm -rf docs
+# We only want to be clearing out the packages we want to update
 mkdir -p docs
+
+# Remove old repo database only (not all packages)
+echo "[*] Cleaning old repo database..."
+rm -f "docs/$REPO_NAME".db* "docs/$REPO_NAME".files*
 
 # Build packages
 cd arch
-for dir in */ ; do
+for pkg in *; do
+    dir="$pkg/"
+    # Check for the PKGBUILD file
     if [[ ! -f "$dir/PKGBUILD" ]]; then
         echo "[!] Missing PKGBUILD in $dir, skipping..."
+        continue
+    fi
+
+    # Check if the directory has uncommitted or committed changes
+    if git diff --quiet HEAD -- "$pkg"; then
+        echo "[*] No changes detected in $pkg, skipping..."
         continue
     fi
     cd "$dir"
@@ -38,9 +48,9 @@ for dir in */ ; do
         sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
         echo "[o] Set pkgver to $new_ver and reset pkgrel to 1"
     else
-        read -rp "Bump pkgrel for $dir? [y/N]: " bump_rel
-        bump_rel="${bump_rel,,}"
-        if [[ "$bump_rel" == "y" ]]; then
+        read -rp "Bump pkgrel for $dir? [y/N]: " bumpRel
+        bumpRel="${bumpRel,,}"
+        if [[ "$bumpRel" == [yY] ]]; then
             old_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
             new_rel=$((old_rel + 1))
             sed -i "s/^pkgrel=.*/pkgrel=$new_rel/" PKGBUILD
@@ -53,7 +63,12 @@ for dir in */ ; do
 
     echo "[*] Building package in $dir..."
     makepkg -cf
-    mv ./*.pkg.tar.zst ../../docs/
+
+    # Remove old copy of the package if it exists & move the new package
+    rm -f ../../docs/"$pkg"*.pkg.tar.zst
+    mv ./"$pkg"*.pkg.tar.zst ../../docs/
+
+    # Cleanup work files & continue
     rm -rf pkg src
     cd ..
 done
@@ -65,10 +80,15 @@ repo-add "$REPO_NAME.db.tar.gz" *.pkg.tar.zst
 cd ..
 
 # Commit and push
-echo "[*] Pushing to GitHub..."
-git add docs/
-git commit -m "Update $REPO_NAME packages"
-git push origin main
-
-# Done
-echo "[o] Published linux-packages/arch successfully!"
+echo "[*] Comitting to GitHub..."
+if git diff --quiet docs/ && git diff --cached --quiet docs/; then
+    echo "[*] No changes to commit."
+else
+    git add docs/
+    git commit -m "Update $REPO_NAME packages on $(date +'%Y-%m-%d %H:%M:%S')"
+    
+    read -rp "Push to Git? (Y/n)" pushGit
+    if [[ "$pushGit" == [yY] ]]; then
+        git push origin main
+    fi
+fi
