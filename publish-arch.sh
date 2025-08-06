@@ -28,33 +28,41 @@ for pkg in *; do
         continue
     fi
 
+    # Check if the package exists 
+    PACKAGE_EXISTS=false
+    if [[ -n "$(ls "../docs/$pkg"*.pkg.tar.zst 2>/dev/null)" ]]; then
+        PACKAGE_EXISTS=true
+    fi
+    
     # Check if the directory has uncommitted or committed changes
-    if git diff --quiet HEAD -- "$pkg"; then
+    if $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg"; then
         echo "[*] No changes detected in $pkg, skipping..."
         continue
     fi
+
     cd "$dir"
 
-    # Read current version and release
-    current_ver=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
-    current_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
-    echo "[*] Current version: $current_ver"
-    echo "[*] Current release: $current_rel"
-
-    # Optional pkgver prompt
-    read -rp "Set new pkgver for $dir? (leave empty to skip): " new_ver
-    if [[ -n "$new_ver" ]]; then
-        sed -i "s/^pkgver=.*/pkgver=$new_ver/" PKGBUILD
-        sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
-        echo "[o] Set pkgver to $new_ver and reset pkgrel to 1"
-    else
-        read -rp "Bump pkgrel for $dir? [y/N]: " bumpRel
-        bumpRel="${bumpRel,,}"
-        if [[ "$bumpRel" == [yY] ]]; then
-            old_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
-            new_rel=$((old_rel + 1))
-            sed -i "s/^pkgrel=.*/pkgrel=$new_rel/" PKGBUILD
-            echo "[o] Bumped pkgrel to $new_rel"
+    if $PACKAGE_EXISTS; then
+        # Read current version and release
+        current_ver=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
+        current_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
+        echo "[*] Current version: $current_ver"
+        echo "[*] Current release: $current_rel"
+        # Optional pkgver prompt
+        read -rp "Set new pkgver for $dir? (leave empty to skip): " new_ver
+        if [[ -n "$new_ver" ]]; then
+            sed -i "s/^pkgver=.*/pkgver=$new_ver/" PKGBUILD
+            sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+            echo "[o] Set pkgver to $new_ver and reset pkgrel to 1"
+        else
+            read -rp "Bump pkgrel for $dir? [y/N]: " bumpRel
+            bumpRel="${bumpRel,,}"
+            if [[ "$bumpRel" == [yY] ]]; then
+                old_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
+                new_rel=$((old_rel + 1))
+                sed -i "s/^pkgrel=.*/pkgrel=$new_rel/" PKGBUILD
+                echo "[o] Bumped pkgrel to $new_rel"
+            fi
         fi
     fi
 

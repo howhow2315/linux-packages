@@ -10,10 +10,7 @@ optdepends=(
   'autossh: Allows optional usage of autossh via -a|--autossh'
 )
 source=('tunnel.sh')
-sha256sums=('e4b28b2a463b6cc946cab92b7ef4c5c8ad59e8ac33eb3376f3aedaf8876eef30'
-            'fc81918fcfe9151508707b72c1747183157c8c97323755fa43dfca5e989a0b3d'
-            'ffc31614b8caa6f1013b516cf455e8dfa8b3ea06ceabadd3d1c9258a103372c8'
-            'c7ff8a57fd444e6870aa709d670520ee5dd6a22c3bb7f8f2fc8b697f781fbb19')
+sha256sums=('5e8ea7c8f364e913a18f73b3f15e568dc1639ef1fa30f4d66cc5e349c386dd21')
 
 package() {
   install -Dm755 tunnel.sh "$pkgdir/usr/bin/tunnel"
