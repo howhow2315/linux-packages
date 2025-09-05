@@ -9,35 +9,8 @@ log() {
 }
 
 progress() {
-    clear
+    echo #clear
     log "$@"
-}
-
-# User input handling
-get_input() {
-    local var="$1"; shift
-    local prompt="$1"; shift
-
-    local LOWER=0 
-    local DEFAULT=""
-
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            -l|--lower) LOWER=1 ;;
-            -d|--default) shift; DEFAULT="$1" ;;
-            *) echo "Unknown flag: $1" >&2 ;;
-        esac
-        shift
-    done
-
-    [[ -n "$DEFAULT" ]] && prompt="$prompt ($DEFAULT)"
-    local input
-    read -rp "$prompt: " input
-
-    [[ -n "$DEFAULT" && -z "$input" ]] && input="$DEFAULT" # default
-    [[ $LOWER -eq 1 ]] && input="${input,,}" # lowercase
-
-    export "$var"="$input"
 }
 
 # pacman -S shorthand
@@ -140,21 +113,16 @@ systemctl enable vnstat
 
 # IME
 progress "IME..."
-get_input installIME "Do you want to install an IME" -d Y 
-if [[ "$installIME" == "y" ]]; then
-    log "Installing fcitx5..."
+log "Installing fcitx5..."
+pacstall fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
 
-    pacstall fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
-
-    # Not required for Wayland, but doesn't hurt. Especially if the user will switch between Wayland and X11.
-    cat <<EOF >> /etc/environment
+cat <<EOF >> /etc/environment # Not required for Wayland, but doesn't hurt. Especially if the user will switch between Wayland and X11.
 
 GTK_IM_MODULE=fcitx
 QT_IM_MODULE=fcitx
 XMODIFIERS=@im=fcitx
 EOF
-    log "Fcitx 5 IME environment variables set."
-fi
+log "Fcitx 5 IME environment variables set."
 
 # Fonts
 log "Installing fonts"
@@ -162,34 +130,27 @@ pacstall noto-fonts noto-fonts-cjk noto-fonts-emoji
 
 # SSH
 progress "SSH..."
-get_input installSSH "Do you want to install SSH" -d N
-if [[ "$installSSH" == "y" ]]; then
-    log "Installing OpenSSH..."
-    log "SSH host is disabled and disallowed in UFW by default. 
-    This can be manually amended by running 'systemctl enable --now sshd && ufw allow ssh && ufw reload' as superuser."
-    pacstall openssh fail2ban
+log "Installing OpenSSH..."
+pacstall openssh fail2ban
 
-    # Harden
-    cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-    sed -i '/^\[sshd\]$/a enabled = true' /etc/fail2ban/jail.local
+# Harden
+cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sed -i '/^\[sshd\]$/a enabled = true' /etc/fail2ban/jail.local
 
-    sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
-    sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 
-    # Prompt for custom port
-    get_input sshPort "Enter SSH port to use" -d 22
-    sed -i "s/^#Port 22/Port $sshPort/" /etc/ssh/sshd_config
+# Update firewall
+log "SSH host is disabled and disallowed in UFW by default. 
+This can be manually amended by running 'systemctl enable --now sshd && ufw allow 22/tcp && ufw reload' as superuser.
+A custom port instead of the default 22 is recommended. This can be done by modifying the port in /etc/ssh/sshd_config"
 
-    # Update firewall
-    ufw allow "$sshPort"/tcp
+systemctl enable --now fail2ban
+ufw reload
 
-    systemctl enable --now fail2ban
-    # systemctl enable --now sshd
-    ufw reload
-fi
-
+# Cleanup then done
 pacman -R --noconfirm archpostinstall
 
 log "Arch Linux post install setup complete!" o
-sleep 1; echo "."; sleep 1; echo ".."; sleep 1; echo "..."
+sleep 1; echo "Rebooting in 3..."; sleep 1; echo "\rRebooting in 2..."; sleep 1; echo "\rRebooting in 1..."
 exit 0
