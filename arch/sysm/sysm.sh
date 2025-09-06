@@ -1,12 +1,7 @@
 #!/bin/bash
 # Arch Linux System Maintenance Script
 set -euo pipefail
-
-# Detect if running as root
-if [[ $EUID -ne 0 ]]; then
-    echo "[x] Please run $(basename "$0") as root."
-    exit 1
-fi
+[[ $EUID -ne 0 ]] && exec sudo "$0" "$@"
 
 # Detect if running interactively or by service
 if [[ -n "${SYSTEMD_INVOCATION_ID-}" || ! -t 0 ]]; then

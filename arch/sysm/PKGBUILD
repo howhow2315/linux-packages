@@ -1,5 +1,5 @@
 pkgname=sysm
-pkgver=1.0.9
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="Weekly Arch Linux system maintenance script with systemd timer"
 arch=('any')
@@ -9,13 +9,11 @@ depends=('coreutils' 'findutils' 'systemd' 'pacman' 'pacman-contrib')
 optdepends=(
   'yay: AUR helper for updating AUR packages'
   'paru: Alternative AUR helper'
-  'rkhunter: Rootkit scanner'
-  'chkrootkit: Another rootkit scanner'
   'fail2ban: Ban brute-force attacks and monitor login attempts'
   'reflector: Automatically update pacman mirrorlist'
 )
 source=('sysm.sh')
-sha256sums=('6f846945056ef72b0aab01692ca3050326863689beb3428cb72a5203dfbddd69')
+sha256sums=('b4261e34fd906ee3c1185079749d91ed4006ad345f36cfd17dbd3b582ebedb4a')
 
 package() {
   install -Dm755 sysm.sh "$pkgdir/usr/bin/sysm"
