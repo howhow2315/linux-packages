@@ -5,6 +5,11 @@ set -euo pipefail
 GIT_REPO="linux-packages"
 REPO_NAME="howhow"
 
+force=false
+if [[ "${1:-}" == "--force" ]]; then
+    force=true
+fi
+
 # Are we in the right repo?
 if [[ "$(basename "$PWD")" != "$GIT_REPO" ]]; then
     echo "Please cd into the repo to publish. (expected: $GIT_REPO)"
@@ -35,7 +40,7 @@ for pkg in *; do
     fi
     
     # Check if the directory has uncommitted or committed changes
-    if $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg" && [[ "$1" != "--force" ]]; then
+    if ! $force && $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg"; then
         echo "[*] No changes detected in $pkg, skipping..."
         continue
     fi
