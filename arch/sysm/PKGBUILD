@@ -1,6 +1,6 @@
 pkgname=sysm
 pkgver=1.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Weekly Arch Linux system maintenance script with systemd timer"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
@@ -13,7 +13,7 @@ optdepends=(
   'reflector: Automatically update pacman mirrorlist'
 )
 source=('sysm.sh')
-sha256sums=('b4261e34fd906ee3c1185079749d91ed4006ad345f36cfd17dbd3b582ebedb4a')
+sha256sums=('a987d5c8a0d42af34e4860c6f97218004288e06629c77f349aeac1b8c295ace3')
 
 package() {
   install -Dm755 sysm.sh "$pkgdir/usr/bin/sysm"
