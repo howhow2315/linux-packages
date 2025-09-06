@@ -13,16 +13,16 @@ progress() {
     log "$@"
 }
 
-# pacman -S shorthand
+# pacman shorthand
 pacstall() {
-    pacman -S --noconfirm --needed "$@"
+    pacman -S --noconfirm "$@"
 }
 
 # Mirrors and system upgrade
 progress "Updating mirrors and upgrading system..."
 log "Fetching latest Arch mirrors and syncing package databases..."
 
-reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
+reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
 pacman -Syu --noconfirm
 
 # AUR package manager
@@ -148,9 +148,43 @@ A custom port instead of the default 22 is recommended. This can be done by modi
 systemctl enable --now fail2ban
 ufw reload
 
+# Plasma cleanup
+if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; then
+    echo "Plasma detected: Running cleanup..."
+
+    # Flatpak + Flathub
+    progress "Installing Flatpak + enabling Flathub..."
+    pacstall flatpak
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    # Remove default editors
+    progress "Removing unwanted default editors (kate, vim), please install your own..."
+    pacman -R kate vim
+
+    # Define apps
+    pacman_apps=(firefox)
+    flatpak_apps=(
+        com.github.tchx84.Flatseal
+        it.mijorus.gearlever
+        io.github.andreibachim.shortcut
+        org.videolan.VLC
+        org.libreoffice.LibreOffice
+        # com.vscodium.codium
+        # org.qbittorrent.qBittorrent
+    )
+
+    # Install pacman apps
+    progress "Installing pacman apps..."
+    pacstall "${pacman_apps[@]}"
+
+    # Install flatpak apps
+    progress "Installing flatpak apps..."
+    flatpak install -y flathub "${flatpak_apps[@]}"
+fi
+
 # Cleanup then done
-pacman -R --noconfirm archpostinstall
+pacman -R archpostinstall
 
 log "Arch Linux post install setup complete!" o
 sleep 1; echo "Rebooting in 3..."; sleep 1; echo "\rRebooting in 2..."; sleep 1; echo "\rRebooting in 1..."
-exit 0
+reboot

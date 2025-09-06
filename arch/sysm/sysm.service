@@ -3,7 +3,7 @@ Description=Run Arch system maintenance script
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/system-maintenance
+ExecStart=/usr/bin/sysm
 User=root
 PrivateTmp=yes
 ProtectHome=yes

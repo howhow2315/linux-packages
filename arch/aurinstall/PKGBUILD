@@ -1,14 +1,14 @@
-pkgname=aur-install
-pkgver=1.0.2
-pkgrel=1
+pkgname=aurinstall
+pkgver=1.0.3
+pkgrel=2
 pkgdesc="Command-line tool to easily make packages from https://aur.archlinux.org/package.git"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'base-devel' 'git')
-source=("aur-install.sh")
-md5sums=('b1215fd1177370302af03c834f34a331')
+source=("aurinstall.sh")
+sha256sums=('23ebdf57105fbb26005381e0ac2939240ad30c73d3e0284172d3f79ccb0b7ee3')
 
 package() {
-  install -Dm755 aur-install.sh "$pkgdir/usr/bin/aur-install"
+  install -Dm755 aurinstall.sh "$pkgdir/usr/bin/aurinstall"
 }

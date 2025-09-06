@@ -35,7 +35,7 @@ for pkg in *; do
     fi
     
     # Check if the directory has uncommitted or committed changes
-    if $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg"; then
+    if $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg" && [[ "$1" != "--force" ]]; then
         echo "[*] No changes detected in $pkg, skipping..."
         continue
     fi

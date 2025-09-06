@@ -1,13 +1,13 @@
 pkgname=mac-spoof
 pkgver=1.0.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Command-line tool to toggle MAC Spoofing"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'networkmanager')
 source=("mac-spoof.sh")
-md5sums=('caece1ab5664d220a6a6dba5a40f2748')
+sha256sums=('4667432a730dd632d8d94cb47901a4f44084750aa5e9f0559111e4d218566d56')
 
 package() {
   install -Dm755 mac-spoof.sh "$pkgdir/usr/bin/mac-spoof"

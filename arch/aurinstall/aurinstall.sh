@@ -1,12 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-# aur-install: Minimal AUR installer with multi-package support
+# aurinstall: Minimal AUR installer with multi-package support
 
 NOCONFIRM=""
 REINSTALL=0
 
-help_message="Usage: aur-install [--noconfirm] [-r|--reinstall] yay paru pkg3 ..."
+CMD=$(basename "$0")
+help_message="Usage: $CMD [--noconfirm] [-r|--reinstall] yay paru pkg3 ..."
 
 # Parse flags
 while [[ $# -gt 0 ]]; do
@@ -49,7 +50,7 @@ for package in "${packages[@]}"; do
     fi
 
     # Clean up and install
-    tmpdir="/tmp/aur-install-$package"
+    tmpdir="/tmp/$CMD-$package"
     [[ -d "$tmpdir" ]] && rm -rf "$tmpdir"
     
     git clone "https://aur.archlinux.org/$package.git" "$tmpdir" || {

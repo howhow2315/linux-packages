@@ -36,7 +36,7 @@ if command -v reflector &>/dev/null; then
     if (( elapsed > two_hours )); then
         # echo "[*] Reflector ran more than 2 hours ago."
         echo "[*] Updating mirrorlist with reflector..."
-        reflector --latest 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+        reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
     else
         echo "*] Reflector ran less than 2 hours ago. Skipping..."
     fi
@@ -76,78 +76,6 @@ else
         echo "[*] Processing user: $user"
         update_aur "$user"
     done
-fi
-
-if $INTERACTIVE; then
-    # Cleanup orphans
-    echo "[*] Checking for non-opt orphaned packages..."
-
-    orphans=$(pacman -Qtdq || true)
-    safe_orphans=()
-
-    for pkg in $orphans; do
-        # Check if pkg is required or optional dependency of any installed package
-        if ! pacman -Qi | awk -v pkg="$pkg" '
-            BEGIN {found=0}
-            /^Name/ {name=$3}
-            /^Depends On/ {deps=$0}
-            /^Optional Deps/ {optdeps=$0}
-            /^$/ {
-                if (deps ~ pkg || optdeps ~ pkg) found=1
-                deps=""; optdeps=""
-            }
-            END {exit !found}
-        '; then
-            safe_orphans+=("$pkg")
-        fi
-    done
-
-    if [[ ${#safe_orphans[@]} -gt 0 ]]; then
-        echo "[*] Non-opt orphaned packages:"
-        echo
-        printf '%s\n' "${safe_orphans[@]}"
-        echo
-        read -rp "Remove these packages? [y/N] " confirm
-        if [[ $confirm =~ ^[Yy]$ ]]; then
-            pacman -Rns --noconfirm "${safe_orphans[@]}"
-        else
-            echo "[o] Aborted."
-        fi
-    else
-        echo "[o] No removable non-opt orphans found."
-    fi
-
-    # Run rootkit hunter
-    if command -v rkhunter &>/dev/null; then
-        echo
-        echo "[*] Running rkhunter..."
-        rkhunter --update 2>&1 | grep -vE 'egrep: warning: egrep is obsolescent; using grep -E' # rkhunter uses egrep which is outdate; and using it obnoxiously prompts `egrep: warning: egrep is obsolescent; please use grep -E instead.` numerous times.
-        rkhunter --cronjob --report-warnings-only
-    fi
-
-    # Run chkrootkit
-    if command -v chkrootkit &>/dev/null; then
-        echo
-        echo "[*] Running chkrootkit..."
-        chkrootkit
-    fi
-
-    # Check for critical journal errors (priority 3 or higher) since last boot
-    echo
-    echo "[*] Checking critical errors from journal..."
-    journalctl --quiet -p 3 -b || echo "[o] No critical errors found."
-
-    # List failed systemd services
-    echo
-    echo "[*] Checking for failed systemd services..."
-    systemctl --failed || echo "[o] No failed services."
-
-    # Fail2Ban status check
-    if systemctl is-active --quiet fail2ban; then
-        echo
-        echo "[*] Fail2Ban status:"
-        fail2ban-client status
-    fi
 fi
 
 # Cleanup old logs (older than 7 days)

@@ -4,24 +4,24 @@ post_install() {
     if [ -t 0 ]; then
         read -rp "Enable timer now? [y/N]: " response
         if [[ "$response" =~ ^[Yy]$ ]]; then
-            systemctl enable --now system-maintenance.timer
+            systemctl enable --now sysm.timer
             echo "[*] Timer enabled and started."
         else
             echo "[*] Skipping timer enable. You can do it later with:"
-            echo "    systemctl enable --now system-maintenance.timer"
+            echo "    systemctl enable --now sysm.timer"
         fi
     else
         echo "[*] Non-interactive install detected (e.g. using --noconfirm)."
         echo "[*] Skipping prompt. You can enable the timer manually later via:"
-        echo "    systemctl enable --now system-maintenance.timer"
+        echo "    systemctl enable --now sysm.timer"
     fi
 }
 
 pre_remove() {
-  if systemctl is-active --quiet system-maintenance.timer; then
-    echo "[*] Disabling system-maintenance.timer..."
-    systemctl disable --now system-maintenance.timer
-    echo "[o] Disabled system-maintenance.timer"
+  if systemctl is-active --quiet sysm.timer; then
+    echo "[*] Disabling sysm.timer..."
+    systemctl disable --now sysm.timer
+    echo "[o] Disabled sysm.timer"
   fi
 }
 
