@@ -1,1 +1,1 @@
-Hey there this are my personal linux packages that i'm using for one thing or another.
+Hey there! These are my personal (Arch) Linux packages that I'm using for one thing or another.
