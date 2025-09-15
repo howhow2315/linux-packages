@@ -5,11 +5,13 @@
 
 set -euo pipefail
 [[ $EUID -ne 0 ]] && exec sudo "$0" "$@"
+
 CMD=$(basename "$0")
 ARGS=("$@")
 IPSET_NAME=""
+DIRECTION=""
 
-log() {
+say() {
     local msg="$1"
     local sym=${2:-"*"}
     [[ -n "$msg" ]] && echo "[$sym] $msg"
@@ -17,20 +19,22 @@ log() {
 
 err() {
     local msg=${1:-"no error message provided"}
-    log "$CMD Error: $msg" "!"
+    say "$CMD Error: $msg" "!"
     exit 1
 }
 
-# Detect ipset:NAME in args
-for i in "${!ARGS[@]}"; do
-    if [[ "${ARGS[$i]}" =~ ^ipset:(.+)$ ]]; then
-        IPSET_NAME="${BASH_REMATCH[1]}"
-        unset 'ARGS[$i]'   # drop it from the array
+# Detect `from ipset:NAME` or `to ipset:NAME`
+for ((i=0; i<${#ARGS[@]}-1; i++)); do
+    if [[ "${ARGS[$i]}" =~ ^(from|to)$ && "${ARGS[$((i+1))]}" =~ ^ipset:(.+)$ ]]; then
+        DIRECTION="${BASH_REMATCH[1]}"
+        IPSET_NAME="${BASH_REMATCH[2]}"
+        unset 'ARGS[$i]'
+        unset 'ARGS[$((i+1))]'
         break
     fi
 done
 
-[[ -z "$IPSET_NAME" ]] && err "No ipset:NAME found in arguments"
+[[ -z "$IPSET_NAME" ]] && err "No 'from ipset:<name>' or 'to ipset:<name>' found in arguments"
 
 # Grab IPs from ipset
 if ! ipset list "$IPSET_NAME" >/dev/null 2>&1; then
@@ -38,11 +42,16 @@ if ! ipset list "$IPSET_NAME" >/dev/null 2>&1; then
 fi
 
 IPS=$(ipset list "$IPSET_NAME" | awk '/Members:/ {found=1; next} found {print}')
-
 [[ -z "$IPS" ]] && err "ipset '$IPSET_NAME' is empty"
 
-# Expand: run ufw for each IP
+# Expand: run ufw for each member of the set
 for ip in $IPS; do
-    log "Adding UFW rule for $ip"
-    ufw "${ARGS[@]}" from "$ip"
+    say "Adding UFW rule for $DIRECTION $ip"
+    if ! output=$(ufw "${ARGS[@]}" "$DIRECTION" "$ip" 2>&1); then
+        err "$output"
+    fi
 done
+
+say "UFW ipset changes successful" o
+say "UFW verbose status: " i
+ufw status verbose
