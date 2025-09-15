@@ -26,14 +26,13 @@ err() {
 # Detect `from ipset:NAME` or `to ipset:NAME`
 for ((i=0; i<${#ARGS[@]}-1; i++)); do
     if [[ "${ARGS[$i]}" =~ ^(from|to)$ && "${ARGS[$((i+1))]}" =~ ^ipset:(.+)$ ]]; then
-        DIRECTION="${BASH_REMATCH[1]}"
-        IPSET_NAME="${BASH_REMATCH[2]}"
+        DIRECTION="${ARGS[$i]}"
+        IPSET_NAME="${ARGS[$((i+1))]#ipset:}"
         unset 'ARGS[$i]'
         unset 'ARGS[$((i+1))]'
         break
     fi
 done
-
 [[ -z "$IPSET_NAME" ]] && err "No 'from ipset:<name>' or 'to ipset:<name>' found in arguments"
 
 # Grab IPs from ipset
