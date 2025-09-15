@@ -67,9 +67,13 @@ log "Detecting sensors..."
 sensors-detect --auto
 
 # Networking
-progress "Installing network monitor (vnstat)..."
+progress "Networking..."
+log "Installing network monitor (vnstat)..."
 pacstall vnstat
 systemctl enable vnstat
+
+log "Installing networking tools (wget)..."
+pacstall wget
 
 # Use Encrypted DNS
 progress "Enabling EDNS..."
@@ -85,6 +89,15 @@ systemctl enable --now systemd-resolved
 # Firewall
 progress "Installing Firewall (ufw)..."
 pacstall ufw
+
+# ufw-docker support
+if systemctl is-active --quiet docker; then
+    docker network create proxy
+
+    wget -O /usr/bin/ufw-docker https://github.com/chaifeng/ufw-docker/raw/master/ufw-docker
+    ufw-docker install
+fi
+
 ufw --force enable
 systemctl enable --now ufw
 
