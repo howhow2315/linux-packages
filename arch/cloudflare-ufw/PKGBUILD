@@ -1,0 +1,14 @@
+pkgname=cloudflare-ufw
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A simple cloudflare ip range ufw rule manager for http and https"
+arch=('any')
+url="https://github.com/howhow2315/linux-packages"
+license=('MIT')
+depends=('bash' 'ufw' 'sudo' 'curl')
+source=("cloudflare-ufw.sh")
+sha256sums=('692bac1341fb70afc0edab81efe28ebdcab284596b96cd95852cdec0afbc67de')
+
+package() {
+    install -Dm755 cloudflare-ufw.sh "$pkgdir/usr/bin/cloudflare-ufw"
+}
