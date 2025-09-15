@@ -45,7 +45,7 @@ IPS=$(ipset list "$IPSET_NAME" | awk '/Members:/ {found=1; next} found {print}')
 
 # Expand: run ufw for each member of the set
 for ip in $IPS; do
-    say "Adding UFW rule for $DIRECTION $ip"
+    say "Changing ufw rule for $DIRECTION $ip"
     if ! output=$(ufw "${ARGS[@]}" "$DIRECTION" "$ip" 2>&1); then
         err "$output"
     fi
