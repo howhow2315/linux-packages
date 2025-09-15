@@ -1,0 +1,14 @@
+pkgname=ufw-ipset
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A ipset ufw wrapper to manage ipsets with ufw"
+arch=('any')
+url="https://github.com/howhow2315/linux-packages"
+license=('MIT')
+depends=('bash' 'ufw' 'sudo' 'ipset')
+source=("ufw-ipset.sh")
+sha256sums=('4b2dbe2dcb14e6342a29b1846d35fdb06c6bd0bc8c0033f501eec7e958de4f64')
+
+package() {
+    install -Dm755 ufw-ipset.sh "$pkgdir/usr/bin/ufw-ipset"
+}
