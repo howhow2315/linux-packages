@@ -66,6 +66,13 @@ systemctl enable acpid
 log "Detecting sensors..."
 sensors-detect --auto
 
+# Disable Lid Switch Suspend
+sudo sed -i \
+  -e 's/^#HandleLidSwitch=.*/HandleLidSwitch=ignore/' \
+  -e 's/^#HandleLidSwitchExternalPower=.*/HandleLidSwitchExternalPower=ignore/' \
+  -e 's/^#HandleLidSwitchDocked=.*/HandleLidSwitchDocked=ignore/' \
+  /etc/systemd/logind.conf
+
 # Networking
 progress "Networking..."
 log "Installing network monitor (vnstat)..."
@@ -135,4 +142,5 @@ fi
 # Cleanup then done
 pacman -R --noconfirm archserverpostinstall 2>/dev/null || true
 
+# clear && fastfetch
 log "Arch Linux server post install setup complete!" o

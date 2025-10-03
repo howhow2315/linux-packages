@@ -1,11 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
-# Ensure script is run as root
-if [[ "$EUID" -ne 0 ]]; then
-  echo "[!] This script must be run as root. Try: sudo $0 $*" >&2
-  exit 1
-fi
+_notif() {
+    local msg="$1" sym=${2:-"*"}
+    [[ -n "$msg" ]] && echo "[$sym] $msg"
+}
+CMD=$(basename "$0")
+_err() {
+    local msg="$1" code=${2:-1}
+    _notif "$CMD ERROR: $msg" !
+    exit "$code"
+}
+
+[[ $EUID -ne 0 ]] && {
+    if command -v sudo &>/dev/null; then
+        exec sudo "$0" "$@"
+    else
+        _err "You need to be root to run this script"
+    fi
+}
 
 ACTION="${1:-}"
 CLIENT_NAME="${2:-}"
@@ -180,7 +193,6 @@ cat > "$CONF_DIR/${CLIENT_NAME}.conf" <<EOF
 [Interface]
 PrivateKey = $CLIENT_PRIV
 Address = ${CLIENT_IP}/32
-DNS = 1.1.1.1
 
 [Peer]
 PublicKey = $SERVER_PUB

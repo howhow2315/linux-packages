@@ -1,6 +1,6 @@
 pkgname=wg-peer
-pkgver=1.0.0
-pkgrel=2
+pkgver=1.0.1
+pkgrel=1
 pkgdesc="Command-line tool to manage WireGuard peers"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
@@ -8,7 +8,7 @@ license=('MIT')
 depends=('bash' 'wireguard-tools')
 optdepends=('qrencode: optional QR code output for mobile clients')
 source=("wg-peer.sh")
-sha256sums=('429b673d69ee93f90cd4292e0fc0e1b2267a79912aef559d5ac1e7e186ee88ec')
+sha256sums=('36b31db11c8570b0c93a26be1c94aa2cf7e09e4a2cf21b1493d08156b5333dab')
 
 package() {
   install -Dm755 wg-peer.sh "$pkgdir/usr/bin/wg-peer"

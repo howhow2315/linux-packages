@@ -1,12 +1,27 @@
 #!/bin/bash
 set -euo pipefail
 
-SSH_DIR="$HOME/.ssh"
+_notif() {
+    local msg="$1" sym=${2:-"*"}
+    [[ -n "$msg" ]] && echo "[$sym] $msg"
+}
+CMD=$(basename "$0")
+_err() {
+    local msg="$1" code=${2:-1}
+    _notif "$CMD ERROR: $msg" !
+    exit "$code"
+}
 
-if [[ ! -d "$SSH_DIR" ]]; then
-    echo "No ~/.ssh directory found."
-    exit 1
-fi
+[[ $EUID -ne 0 ]] && {
+    if command -v sudo &>/dev/null; then
+        exec sudo "$0" "$@"
+    else
+        _err "You need to be root to run this script"
+    fi
+}
+
+SSH_DIR="$HOME/.ssh"
+[[ ! -d "$SSH_DIR" ]] && _err "No ~/.ssh directory found."
 
 echo "[*] Fixing permissions in $SSH_DIR ..."
 
@@ -31,4 +46,4 @@ for f in config known_hosts known_hosts.old; do
     fi
 done
 
-echo "[o] Permissions fixed."
+_notif "Permissions fixed." o

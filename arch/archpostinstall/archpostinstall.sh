@@ -45,7 +45,8 @@ if [[ -n "$USERNAME" ]]; then
 @realtime   -   memlock    unlimited
 EOF
 
-    usermod -aG realtime "$USERNAME"
+    usermod -aG realtime "$USERNAME" # Realtime Permissions
+    usermod -aG audio "$USERNAME" # MIDI Permissions
 fi
 
 # Use Encrypted DNS
