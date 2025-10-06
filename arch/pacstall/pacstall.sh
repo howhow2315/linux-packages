@@ -1,4 +1,5 @@
 #!/bin/bash
+# A simple pacman wrapper for shorthand inside scripts and basic usage
 set -euo pipefail
 
 _notif() {
@@ -11,32 +12,21 @@ _err() {
     _notif "$CMD ERROR: $msg" !
     exit "$code"
 }
+_hascmd() { command -v "$1" &>/dev/null; }
+(( EUID != 0 )) && { _hascmd sudo && exec sudo "$0" "$@" || _err "You need to be root to run this script"; }
 
-[[ $EUID -ne 0 ]] && {
-    if command -v sudo &>/dev/null; then
-        exec sudo "$0" "$@"
-    else
-        _err "You need to be root to run this script"
-    fi
-}
-
-help_message="Usage: $CMD [operation] [options] [package(s)]...
+USAGE_MSG="Usage: $CMD [operation] [options] [package(s)]...
 Wrapper behavior:
 
 Defaults to -S (sync/install) if no operation is given
 
---noconfirm is added automatically in non-interactive use (unless already passed)"
+--noconfirm is added automatically in non-interactive use (unless already passed)
 
-prompt_help() {
-    echo "$help_message"
-    echo
-    echo "Below is 'pacman --help'. This script wraps the entirety of pacman, so every operation here is usable"
-    pacman --help
-    exit 0
-}
+Below is 'pacman --help'. This script wraps the entirety of pacman, so every operation here is usable"
+_usage() { echo "$USAGE_MSG" && pacman --help && exit 1; }
 
 # If no arguments are specified it'll just route to pacmans error msg "error: no targets specified."
-[[ $# -eq 0 ]] && prompt_help
+[[ $# -eq 0 ]] && _usage
 
 # Defaults
 operations=()
@@ -55,7 +45,7 @@ while [[ $# -gt 0 ]]; do
             noconfirm_present=true
             packages+=("$1") ;; # pass through to pacman
         -h|--help)
-            prompt_help ;;
+            _usage ;;
         -v|--verbose) 
             verbose=true ;;
         -?*)

@@ -1,71 +1,75 @@
 #!/bin/bash
+# Minimal AUR installer with multi-package support
 set -euo pipefail
 
-# aurinstall: Minimal AUR installer with multi-package support
-
-NOCONFIRM=""
-REINSTALL=0
-
+_notif() {
+    local msg="$1" sym=${2:-"*"}
+    [[ -n "$msg" ]] && echo "[$sym] $msg"
+}
 CMD=$(basename "$0")
-help_message="Usage: $CMD [--noconfirm] [-r|--reinstall] yay paru pkg3 ..."
+_err() {
+    local msg="$1" code=${2:-1}
+    _notif "$CMD ERROR: $msg" !
+    exit "$code"
+}
+_hascmd() { command -v "$1" &>/dev/null; }
+if (( EUID == 0 )); then
+    _notif "Avoid running $CMD as root - switching to your user" "!"
+    _hascmd sudo && [[ -n "${SUDO_USER:-}" ]] && exec sudo -u "$SUDO_USER" "$0" "$@" || _err "Cannot safely drop privileges; rerun as user"
+fi
+
+USAGE_MSG="Usage: $CMD [--noconfirm] [-r|--reinstall] yay paru pkg3 ..."
+_usage() { echo "$USAGE_MSG" && exit 1; }
+
+NOCONFIRM=false
+REINSTALL=false
+packages=()
 
 # Parse flags
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -r|--reinstall)
-            REINSTALL=1
-            ;;
+            REINSTALL=true ;;
         --noconfirm)
-            NOCONFIRM="--noconfirm"
-            ;;
+            NOCONFIRM=true ;;
         -h|--help)
-            echo $help_message
-            exit 0
-            ;;
+            _usage ;;
         -*)
-            echo "Unknown flag: $1"
-            echo $help_message
-            exit 1
+            _notif "Unknown flag: $1" !
+            _usage
             ;;
         *)
-            packages+=("$1")
-            ;;
+            packages+=("$1") ;;
     esac
     shift
 done
 
 # Process packages
 for package in "${packages[@]}"; do
-    echo "[*] Processing package: $package"
+    _notif "Processing package: $package"
     
     # See if pacman already has the package installed (and optionally prompt reinstall)
     if pacman -Q "$package" &>/dev/null; then
-        if [[ $REINSTALL -eq 1 ]]; then
-            echo "[*] Reinstalling $package..."
-            sudo pacman -R "$package" --noconfirm
-        else
-            echo "[o] $package already installed. Skipping."
+        if ! $REINSTALL; then
+            _notif "$package already installed. Skipping." o
             continue
         fi
+        _notif "Reinstalling $package..."
     fi
 
     # Clean up and install
     tmpdir="/tmp/$CMD-$package"
-    [[ -d "$tmpdir" ]] && rm -rf "$tmpdir"
+    rm -rf "$tmpdir"
     
     git clone "https://aur.archlinux.org/$package.git" "$tmpdir" || {
-        echo "[x] Failed to clone $package"
+        _notif "Failed to clone $package" x
         continue
     }
     
     cd "$tmpdir"
-    makepkg -si $NOCONFIRM
-
-    # Check path and version
-    if command -v "$package" &>/dev/null; then
-        echo "[o] Installed $package"
-        "$package" --version || echo "(no '--version' output)"
+    if $NOCONFIRM; then
+        makepkg -si --noconfirm
     else
-        echo "[?] '$package' installed, but no CLI binary found in PATH."
+        makepkg -si
     fi
 done

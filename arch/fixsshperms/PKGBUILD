@@ -1,13 +1,13 @@
 pkgname=fixsshperms
-pkgver=1.0.0
-pkgrel=2
+pkgver=1.0.1
+pkgrel=1
 pkgdesc="Quickly fixes permissions in .ssh"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'openssh')
 source=("fixsshperms.sh")
-sha256sums=('f47e614ec98f2034aaea6c533871243761c4cd4aa5fcd553928fc700fc89ab1a')
+sha256sums=('4eaf16f491bebb98dcb1525eaab5a817eb625b7de270842911bd6dd8826576e3')
 
 package() {
     install -Dm755 fixsshperms.sh "$pkgdir/usr/bin/fixsshperms"
