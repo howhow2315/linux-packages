@@ -13,28 +13,32 @@ _err() {
 }
 _hascmd() { command -v "$1" &>/dev/null; }
 
-USAGE_MSG="Usage: $CMD [on|off] [interface]
+USAGE_MSG="Usage: $CMD [on|off|toggle] [interface]
 Toggle the WireGuard connection for the specified interface.
-By default, 'wg0' will be used."
+By default, the interface 'wg0' will be used and toggled."
 _usage() { echo "$USAGE_MSG" && exit 1; }
 
 # Safely escalate
 _sudo() {
     if (( EUID != 0 )); then
-        _hascmd sudo && exec sudo "$@" || _err "You need to be root to run this script"
+        _hascmd sudo && sudo "$@" || _err "You need to be root to run this script"
     else
         "$@"
     fi
+    return 0
 }
 
 # Arguments
 INTERFACE="${2:-wg0}"
 ACTION="${1:-toggle}"
 
-UPDOWN=$(systemctl is-active "wg-quick@$INTERFACE")
+updown() {
+    local state=$(systemctl is-active "wg-quick@$INTERFACE" || true)
+    echo $state
+}
 
 enable() {
-    if [[ "$UPDOWN" == "inactive" ]]; then
+    if [[ "$(updown)" == "inactive" ]]; then
         _notif "Attempting to bring up '$INTERFACE'..."
         if _sudo systemctl start "wg-quick@$INTERFACE"; then
             _notif "Connection to '$INTERFACE' established" o
@@ -50,7 +54,7 @@ enable() {
 
 disable() {
     _notif "Attempting to bring down '$INTERFACE'..."
-    if [[ "$UPDOWN" == "active" ]]; then
+    if [[ "$(updown)" == "active" ]]; then
         if _sudo systemctl stop "wg-quick@$INTERFACE"; then
             _notif "Connection to '$INTERFACE' successfully terminated" o
             exit 0
@@ -63,12 +67,31 @@ disable() {
     exit 1
 }
 
-_notif "WireGuard connection to '$INTERFACE' is $UPDOWN"
-[[ "$UPDOWN" == "failed" ]] && _sudo systemctl restart "wg-quick@$INTERFACE"
+[[ "$(updown)" == "failed" ]] && _sudo systemctl restart "wg-quick@$INTERFACE"
 
+# restart if service is stuck
+if [[ "$(updown)" == "failed" ]]; then
+    _notif "Restarting failed interface '$INTERFACE'..."
+    _sudo systemctl restart "wg-quick@$INTERFACE"
+fi
+
+toggle() {
+    local state=$(updown)
+    _notif "WireGuard connection to '$INTERFACE' is $state"
+
+    case "$state" in
+        active)  disable ;;
+        inactive|failed) enable ;;
+        *) _notif "Unknown state: $state" "?" ;;
+    esac
+}
 case "$ACTION" in
-    o|on) enable ;;
-    f|off) disable ;;
-    -h|--help|help) _usage ;;
-    toggle|*) [[ "$UPDOWN" == "inactive" ]] && enable || disable ;;
+    -o|--on|o|on) enable ;;
+    -i|--off|i|off) disable ;;
+    -h|--help|h|help) _usage ;;
+    -t|--toggle|t|toggle) toggle ;;
+    *)
+        INTERFACE="$ACTION"
+        toggle
+        ;;
 esac
