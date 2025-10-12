@@ -117,11 +117,16 @@ progress "IME..."
 log "Installing fcitx5..."
 pacstall fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
 
-cat <<EOF >> /etc/environment # Not required for Wayland, but doesn't hurt. Especially if the user will switch between Wayland and X11.
+cat <<EOF >> /etc/environment
 
+# Virtual Keyboard / IME / fcitx 5
+INPUT_METHOD=fcitx
 GTK_IM_MODULE=fcitx
 QT_IM_MODULE=fcitx
 XMODIFIERS=@im=fcitx
+SDL_IM_MODULE=fcitx
+GLFW_IM_MODULE=fcitx
+
 EOF
 log "Fcitx 5 IME environment variables set."
 
@@ -168,7 +173,7 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
         com.github.tchx84.Flatseal
         it.mijorus.gearlever
         io.github.andreibachim.shortcut
-        org.videolan.VLC
+        # org.videolan.VLC
         org.libreoffice.LibreOffice
         # com.vscodium.codium
         # org.qbittorrent.qBittorrent
