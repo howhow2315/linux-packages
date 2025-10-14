@@ -26,9 +26,9 @@ reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacma
 pacman -Syu --noconfirm
 
 # AUR package manager
-pacstall aur-install
-aur-install yay
-pacman -R --noconfirm aur-install
+# pacstall aur-install
+# aur-install yay
+# pacman -R --noconfirm aur-install
 
 # Add host to hosts
 HOSTNAME=$(cat /etc/hostname)
@@ -100,6 +100,10 @@ progress "Installing terminal tools (bash-completion pacman-contrib fastfetch tm
 pacstall bash-completion pacman-contrib fastfetch tmux
 grep -qxF "fastfetch" /etc/bash.bashrc || echo "fastfetch" >> /etc/bash.bashrc
 
+# ext handlers
+progress "Installing ext handlers (wine)..."
+pacstall wine
+
 # Sensors
 progress "Installing sensors (lm_sensors acpi acpid)..." 
 pacstall lm_sensors acpi acpid 
@@ -164,8 +168,8 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
     # Remove default editors
-    progress "Removing unwanted default editors (kate, vim), please install your own..."
-    pacman -R kate vim
+    # progress "Removing unwanted default editors (kate, vim), please install your own..."
+    # pacman -R kate vim
 
     # Define apps
     pacman_apps=(firefox)
