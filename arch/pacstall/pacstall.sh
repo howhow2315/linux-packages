@@ -16,8 +16,6 @@ USAGE_CMDS+=("pacman --help")
 # If no arguments are specified it'll just route to pacmans error msg "error: no targets specified."
 [[ $# -eq 0 ]] && _usage
 
-_require_root "$@"
-
 # Defaults
 operations=()
 packages=()
@@ -78,7 +76,7 @@ if printf '%s\n' "${operations[@]}" | grep -Eq '^-S($|[[:space:]])'; then
         # Compare and sync if necessary
         if (( build_ts > db_ts )); then
             _notif "Repo '$repo' is stale (pkg newer than db), refreshing..." "~"
-            pacman -Sy --noconfirm >/dev/null && _notif "Repository database updated" "~" || _err "Failed to refresh repositories for '$repo'"
+            _run_as_root pacman -Sy --noconfirm >/dev/null && _notif "Repository database updated" "~" || _err "Failed to refresh repositories for '$repo'"
             break
         else
             $verbose && _notif "Repo '$repo' is up-to-date for '$pkg'" "o"
@@ -94,5 +92,4 @@ $auto_noconfirm && ! $noconfirm_present && cmd+=("--noconfirm")
 
 cmd+=("${packages[@]}")
 
-$verbose && _notif "Executing: '${cmd[*]}'" "+"
-exec "${cmd[@]}"
+_run_as_root "${cmd[@]}"
