@@ -1,5 +1,5 @@
 #!/bin/bash
-# A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support.
+# A yt-dlp wrapper that downloads with metadata, thumbnails, and playlist support.
 source /usr/lib/howhow/common.sh
 
 USAGE_CMDS+=("yt-dlp --help")
