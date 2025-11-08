@@ -1,19 +1,7 @@
 #!/bin/bash
 # A quick fix script for .ssh permissions
-set -euo pipefail
-
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-(( EUID != 0 )) && { _hascmd sudo && exec sudo "$0" "$@" || _err "You need to be root to run this script"; }
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
 # Locate SSH directory
 if [[ "$(basename "$PWD")" == ".ssh" ]]; then

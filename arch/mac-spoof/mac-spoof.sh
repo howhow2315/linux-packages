@@ -1,22 +1,12 @@
 #!/bin/bash
 # MAC Spoofing Toggle Script for NetworkManager
-set -euo pipefail
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" "!"
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-(( EUID != 0 )) && { _hascmd sudo && exec sudo "$0" "$@" || _err "You need to be root to run this script"; }
+USAGE_ARGS+=("[on|off|status|help]")
 
-USAGE_MSG="Usage: $CMD [on|off|status|help]"
-_usage() { echo "$USAGE_MSG" && exit 1; }
+# Require at least one arg
+[[ $# -eq 0 ]] && _usage
 
 CONFIG_FILE="/etc/NetworkManager/conf.d/mac-spoof.conf"
 ENABLED=false
@@ -55,9 +45,6 @@ status() {
     [[ "$ENABLED" == "true" ]] && state="enabled"
     _notif "MAC Spoofing is currently $state." o
 }
-
-# require at least one arg (avoids set -u error on $1)
-[[ $# -eq 0 ]] && _usage
 
 case "${1,,}" in
     on|o) enable ;;

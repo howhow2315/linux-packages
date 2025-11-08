@@ -1,26 +1,15 @@
 #!/bin/bash
 # Minimal AUR installer with multi-package support
-set -euo pipefail
+source /usr/lib/howhow/common.sh
 
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-if (( EUID == 0 )); then
-    _notif "Avoid running $CMD as root - switching to your user" "!"
-    _hascmd sudo && [[ -n "${SUDO_USER:-}" ]] && exec sudo -u "$SUDO_USER" "$0" "$@" || _err "Cannot safely drop privileges; rerun as user"
+USAGE_ARGS+=("[--noconfirm]" "[-r|--reinstall]" "yay" "paru" "pkg3" "...")
+
+if _is_root; then
+    _notif "Avoid running $CMD as root — switching to your user" "!"
+    _drop_privileges "$@"
 fi
 
-USAGE_MSG="Usage: $CMD [--noconfirm] [-r|--reinstall] yay paru pkg3 ..."
-_usage() { echo "$USAGE_MSG" && exit 1; }
-
+# Defaults
 NOCONFIRM=false
 REINSTALL=false
 packages=()

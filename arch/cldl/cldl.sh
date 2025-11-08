@@ -1,12 +1,8 @@
 #!/bin/bash
 # A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support.
-set -euo pipefail
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_usage() { echo "Usage: $CMD [--audio|--video] <URL>"; exit 1; }
+source /usr/lib/howhow/common.sh
+
+USAGE_ARGS+=("[--audio|--video]" "<URL>")
 
 # Defaults
 flags=()

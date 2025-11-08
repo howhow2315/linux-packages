@@ -1,13 +1,13 @@
 pkgname=archserverpostinstall
-pkgver=3
-pkgrel=2
+pkgver=3.0.1
+pkgrel=1
 pkgdesc="Interactive post-Arch Linux server setup script for firewall, EDNS, SSHD, power management, and system tweaks"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
-depends=('bash' 'base-devel' 'sudo' 'reflector' 'systemd')
+depends=('bash' 'pacstall' 'howhow-common' 'base-devel' 'sudo' 'reflector' 'systemd')
 source=("archserverpostinstall.sh")
-sha256sums=('3b75a2f22ea72b146c155bcec2fba83b819a8e35bedb200c4b930a85071aeb85')
+sha256sums=('f5095b87fe2d5491ff515ca9ca0ac138a26d0290d7acd124927d3ea46f14e25e')
 
 package() {
     install -Dm755 archserverpostinstall.sh "$pkgdir/usr/bin/archserverpostinstall"

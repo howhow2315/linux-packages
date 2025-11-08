@@ -1,13 +1,13 @@
 pkgname=archpostinstall
-pkgver=1.0.4
+pkgver=1.0.5
 pkgrel=1
 pkgdesc="Interactive post-Arch Linux setup script for firewall, EDNS, IME, SSH, power management, and system tweaks"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
-depends=('bash' 'base-devel' 'sudo' 'reflector' 'systemd' 'git')
+depends=('bash' 'pacstall' 'howhow-common' 'base-devel' 'sudo' 'reflector' 'systemd' 'git')
 source=("archpostinstall.sh")
-sha256sums=('4fa88c3eafa257a94849b2aa1c218228111e355a1f3b5a4f972810e4e00424be')
+sha256sums=('d8fc3cbf4cc73c50e0510abce2f0aa7a9e559c05d0d90dc695253ebfe48a1945')
 
 package() {
     install -Dm755 archpostinstall.sh "$pkgdir/usr/bin/archpostinstall"

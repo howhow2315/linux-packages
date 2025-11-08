@@ -1,28 +1,9 @@
 #!/bin/bash
 # A simple pacman wrapper for shorthand inside scripts and basic usage
-set -euo pipefail
+source /usr/lib/howhow/common.sh
 
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-if (( EUID != 0 )); then
-    if _hascmd sudo; then
-        _notif "This script is running as root via sudo: '$0 $*'"
-        exec sudo "$0" "$@"
-    else
-        _err "You need to be root to run this script"
-    fi
-fi
-
-USAGE_MSG="Usage: $CMD [operation] [options] [package(s)]...
+USAGE_ARGS+=("[operation]" "[options]" "[package(s)]")
+USAGE_MSG="
 Wrapper behavior:
 
 Defaults to -S (sync/install) if no operation is given
@@ -30,10 +11,12 @@ Defaults to -S (sync/install) if no operation is given
 --noconfirm is added automatically in non-interactive use (unless already passed)
 
 Below is 'pacman --help'. This script wraps the entirety of pacman, so every operation here is usable"
-_usage() { echo "$USAGE_MSG" && pacman --help && exit 1; }
+USAGE_CMDS+=("pacman --help")
 
 # If no arguments are specified it'll just route to pacmans error msg "error: no targets specified."
 [[ $# -eq 0 ]] && _usage
+
+_require_root "$@"
 
 # Defaults
 operations=()

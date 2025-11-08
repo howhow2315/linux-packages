@@ -1,26 +1,21 @@
 #!/bin/bash
 # Requires: bash, git, base-devel, pacman-contrib
-set -euo pipefail
+source ./arch/howhow-common/common.sh
 
 GIT_REPO="linux-packages"
 REPO_NAME="howhow"
 
 force=false
-if [[ "${1:-}" == "--force" ]]; then
-    force=true
-fi
+[[ "${1:-}" == "--force" ]] && force=true
 
 # Are we in the right repo?
-if [[ "$(basename "$PWD")" != "$GIT_REPO" ]]; then
-    echo "Please cd into the repo to publish. (expected: $GIT_REPO)"
-    exit 1
-fi
+[[ "$(basename "$PWD")" != "$GIT_REPO" ]] &&  _err "Please cd into the repo to publish. (expected: $GIT_REPO)"
 
 # We only want to be clearing out the packages we want to update
 mkdir -p docs
 
 # Remove old repo database only (not all packages)
-echo "[*] Cleaning old repo database..."
+_notif "Cleaning old repo database..."
 rm -f "docs/$REPO_NAME".db* "docs/$REPO_NAME".files*
 
 # Build packages
@@ -29,7 +24,7 @@ for pkg in *; do
     dir="$pkg/"
     # Check for the PKGBUILD file
     if [[ ! -f "$dir/PKGBUILD" ]]; then
-        echo "[!] Missing PKGBUILD in $dir, skipping..."
+        _notif "Missing PKGBUILD in $dir, skipping..." !
         continue
     fi
 
@@ -41,7 +36,7 @@ for pkg in *; do
     
     # Check if the directory has uncommitted or committed changes
     if ! $force && $PACKAGE_EXISTS && git diff --quiet HEAD -- "$pkg"; then
-        echo "[*] No changes detected in $pkg, skipping..."
+        _notif "No changes detected in $pkg, skipping..."
         continue
     fi
 
@@ -51,14 +46,14 @@ for pkg in *; do
         # Read current version and release
         current_ver=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)
         current_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
-        echo "[*] Current version: $current_ver"
-        echo "[*] Current release: $current_rel"
+        _notif "Current version: $current_ver"
+        _notif "Current release: $current_rel"
         # Optional pkgver prompt
         read -rp "Set new pkgver for $dir? (leave empty to skip): " new_ver
         if [[ -n "$new_ver" ]]; then
             sed -i "s/^pkgver=.*/pkgver=$new_ver/" PKGBUILD
             sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
-            echo "[o] Set pkgver to $new_ver and reset pkgrel to 1"
+            _notif "Set pkgver to $new_ver and reset pkgrel to 1" o
         else
             read -rp "Bump pkgrel for $dir? [y/N]: " bumpRel
             bumpRel="${bumpRel,,}"
@@ -66,15 +61,15 @@ for pkg in *; do
                 old_rel=$(grep '^pkgrel=' PKGBUILD | cut -d= -f2)
                 new_rel=$((old_rel + 1))
                 sed -i "s/^pkgrel=.*/pkgrel=$new_rel/" PKGBUILD
-                echo "[o] Bumped pkgrel to $new_rel"
+                _notif "Bumped pkgrel to $new_rel" o
             fi
         fi
     fi
 
-    echo "[*] Updating checksums in $dir..."
+    _notif "Updating checksums in $dir..."
     updpkgsums
 
-    echo "[*] Building package in $dir..."
+    _notif "Building package in $dir..."
     makepkg -cf
 
     # Remove old copy of the package if it exists & move the new package
@@ -88,14 +83,14 @@ done
 
 # Create repo
 cd ../docs
-echo "[*] Creating repo database..."
+_notif "Creating repo database..."
 repo-add "$REPO_NAME.db.tar.gz" *.pkg.tar.zst
 cd ..
 
 # Commit and push
-echo "[*] Comitting to GitHub..."
+_notif "Comitting to GitHub..."
 if git diff --quiet docs/ && git diff --cached --quiet docs/; then
-    echo "[*] No changes to commit."
+    _notif "No changes to commit."
 else
     git add docs/
     git commit -m "Update $REPO_NAME packages on $(date +'%Y-%m-%d %H:%M:%S')"

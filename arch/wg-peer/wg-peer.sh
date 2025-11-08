@@ -1,30 +1,19 @@
 #!/bin/bash
-set -euo pipefail
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-if (( EUID != 0 )); then
-    if _hascmd sudo; then
-        _notif "This script is running as root via sudo: '$0 $*'"
-        exec sudo "$0" "$@"
-    else
-        _err "You need to be root to run this script"
-    fi
-fi
+USAGE_ARGS+=("COMMAND" "[...]")
+USAGE_MSG="
 
+Commands:
+    add <client-name> [client-ip]
+    remove <client-name>
+    list
+"
+
+# Defaults
 ACTION="${1:-}"
 CLIENT_NAME="${2:-}"
-
-SCRIPT_CMD=$(basename "$0")
 
 KEY_DIR="/etc/wireguard/keys"
 CONF_DIR="/etc/wireguard/clients"
@@ -38,20 +27,9 @@ SERVER_PUBLIC_IP="129.80.84.37"
 SERVER_ENDPOINT="${SERVER_PUBLIC_IP}:${WG_PORT}"
 WG_INTERFACE="wg0"
 
-function usage() {
-    echo "Usage:"
-    echo "  $SCRIPT_CMD add <client-name> [client-ip]"
-    echo "  $SCRIPT_CMD remove <client-name>"
-    echo "  $SCRIPT_CMD list"
-    exit 1
-}
-
 function rebuild_wg0() {
-    echo "[*] Rebuilding wg0.conf..."
-    if [[ ! -s "$WG_BASE" ]]; then
-        echo "[!] Base config ($WG_BASE) is missing or empty. Aborting." >&2
-        exit 1
-    fi
+    _notif "Rebuilding wg0.conf..."
+    [[ ! -s "$WG_BASE" ]] && _err "Base config ($WG_BASE) is missing or empty. Aborting."
 
     cat "$WG_BASE" > "$WG_CONF"
     for peer in "$PEER_DIR"/*.conf; do
@@ -59,20 +37,20 @@ function rebuild_wg0() {
     done
 
     # Clear out all stale peers:
-    echo "[*] Refreshing peers..."
+    _notif "Refreshing peers..." *
     sudo wg-quick down wg0 && sudo wg-quick up wg0
 
     # Reload WireGuard
     wg addconf "$WG_INTERFACE" <(wg-quick strip "$WG_INTERFACE")
 
-    echo "[o] wg0.conf has been rebuilt."
+    _notif "wg0.conf has been rebuilt." o
 }
 
 # REMOVE CLIENT
 if [[ "$ACTION" == "remove" ]]; then
-    [[ -z "$CLIENT_NAME" ]] && usage
+    [[ -z "$CLIENT_NAME" ]] && _usage
 
-    echo "[-] Removing client: $CLIENT_NAME"
+    _notif "Removing client: $CLIENT_NAME" -
 
     # Remove peer block from wg0.conf
     sudo sed -i "/# ${CLIENT_NAME}/,+2d" "$WG_CONF"
@@ -85,13 +63,13 @@ if [[ "$ACTION" == "remove" ]]; then
 
     # Rebuild & Reload
     rebuild_wg0
-    echo "[o] Client '$CLIENT_NAME' removed"
+    _notif "Client '$CLIENT_NAME' removed" o
     exit 0
 fi
 
 # LIST CLIENTS
 if [[ "$ACTION" == "list" ]]; then
-    echo "[*] Existing clients:"
+    _notif "Existing clients:"
     for conf in "$CONF_DIR"/*.conf; do
         [[ -f "$conf" ]] || continue
         client=$(basename "$conf" .conf)
@@ -119,44 +97,33 @@ if [[ "$ACTION" == "list" ]]; then
                 in_block && /^$/ { in_block = 0 }
                 END {
                     if (handshake != "") {
-                        print "     Status: connected"
+                        print "Status: connected"
                         print "         Endpoint: " endpoint
                         print "         Last handshake: " handshake
                         print "         Transfer: ↓" rx " ↑" tx
                     } else {
-                        print "     Status: disconnected (no handshake)"
+                        print "Status: disconnected (no handshake)"
                     }
                 }
             ')
         else
-            stats="     Status: not loaded"
+            stats="Status: not loaded"
         fi
 
-        echo "- $client"
-        echo "  IP: $ip"
-        echo "  Pubkey: ${pubkey:0:16}..."
-        echo "$stats"
+        echo "- $client
+    IP: $ip
+    Pubkey: ${pubkey:0:16}...
+    $stats
+"
     done
 
     exit 0
 fi
 
 # ADD CLIENT
-if [[ "$ACTION" != "add" ]]; then
-    echo "[x] Invalid action: '$ACTION'. Use 'add' or 'remove'"
-    usage
-fi
-
-if [[ -z "$CLIENT_NAME" ]]; then
-    echo "[x] Client name is required when adding a peer."
-    usage
-fi
-
-# Prevent reserved or dangerous names
-if [[ "$CLIENT_NAME" =~ ^(server|add|remove|list|help)$ ]]; then
-    echo "[!] Invalid or reserved client name: '$CLIENT_NAME'"
-    exit 1
-fi
+[[ "$ACTION" != "add" ]] && _notif "Invalid action: '$ACTION'. Use 'add' or 'remove'" x && _usage
+[[ -z "$CLIENT_NAME" ]] && _notif "Client name is required when adding a peer." x && _usage
+[[ "$CLIENT_NAME" =~ ^(server|add|remove|list|help)$ ]] &&  _err "Invalid or reserved client name: '$CLIENT_NAME'" # Prevent reserved or dangerous names
 
 function get_next_ip() {
     local base="10.66.66"
@@ -170,8 +137,7 @@ function get_next_ip() {
         fi
     done
 
-    echo "Error: No free IPs available in subnet!" >&2
-    exit 1
+    _err "No free IPs available in subnet!"
 }
 
 CLIENT_IP="${3:-$(get_next_ip)}"
@@ -212,16 +178,17 @@ EOF
 
 # Rebuild & Reload
 rebuild_wg0
-echo "[+] Added: $CLIENT_NAME"
-echo "    -> Config: $CONF_DIR/${CLIENT_NAME}.conf"
-echo "    -> IP: $CLIENT_IP"
+_notif "Added: $CLIENT_NAME
+    -> Config: $CONF_DIR/${CLIENT_NAME}.conf
+    -> IP: $CLIENT_IP
+" +
 
-# Optional QR code for phones
-if command -v qrencode &>/dev/null; then
+# (Optional) QR code handling
+if _hascmd qrencode; then
     read -p "Print QR code? (y/N) " printQR
     printQR=${printQR,,}
     if [[ "$printQR" =~ ^y(es)?$ ]]; then
-        echo "[*] QR Code:"
+        _notif "QR Code:"
         qrencode -t ansiutf8 < "$CONF_DIR/${CLIENT_NAME}.conf"
     fi
 fi

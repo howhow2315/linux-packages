@@ -1,22 +1,11 @@
 #!/bin/bash
-set -euo pipefail
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-
-USAGE_MSG="Usage: $CMD [on|off|toggle] [interface]
+USAGE_ARGS+=("[on|off|toggle]" "[interface]")
+USAGE_MSG="
 Toggle the WireGuard connection for the specified interface.
 By default, the interface 'wg0' will be used and toggled."
-_usage() { echo "$USAGE_MSG" && exit 1; }
 
 # Safely escalate
 _sudo() {
@@ -29,8 +18,8 @@ _sudo() {
 }
 
 # Arguments
-INTERFACE="${2:-wg0}"
-ACTION="${1:-toggle}"
+INTERFACE="${2:-"wg0"}"
+ACTION="${1:-"toggle"}"
 
 updown() {
     local state=$(systemctl is-active "wg-quick@$INTERFACE" || true)

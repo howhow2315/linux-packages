@@ -1,26 +1,7 @@
 #!/bin/bash
 # Arch Linux System Maintenance Script
-set -euo pipefail
-
-_notif() {
-    local msg="$1" sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-CMD=$(basename "$0")
-_err() {
-    local msg="$1" code=${2:-1}
-    _notif "$CMD ERROR: $msg" !
-    exit "$code"
-}
-_hascmd() { command -v "$1" &>/dev/null; }
-if (( EUID != 0 )); then
-    if _hascmd sudo; then
-        _notif "This script is running as root via sudo: '$0 $*'"
-        exec sudo "$0" "$@"
-    else
-        _err "You need to be root to run this script"
-    fi
-fi
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
 _notif "Starting system maintenance..."
 

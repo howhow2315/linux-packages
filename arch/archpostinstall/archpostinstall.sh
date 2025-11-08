@@ -1,26 +1,11 @@
 #!/bin/bash
-[[ $EUID -ne 0 ]] && exec sudo "$0" "$@"
-
-# Basic logging functions
-log() {
-    local msg="$1"
-    local sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-
-progress() {
-    echo #clear
-    log "$@"
-}
-
-# pacman shorthand
-pacstall() {
-    pacman -S --noconfirm "$@"
-}
+# Arch Linux desktop post-install script
+source /usr/lib/howhow/common.sh
+_require_root "$@"
 
 # Mirrors and system upgrade
-progress "Updating mirrors and upgrading system..."
-log "Fetching latest Arch mirrors and syncing package databases..."
+_notif_sep "Updating mirrors and upgrading system..."
+_notif "Fetching latest Arch mirrors and syncing package databases..."
 
 reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
 pacman -Syu --noconfirm
@@ -50,7 +35,7 @@ EOF
 fi
 
 # Use Encrypted DNS
-progress "Enabling EDNS..."
+_notif_sep "Enabling EDNS..."
 cat <<EOF > "/etc/systemd/resolved.conf" # Configure DNS-over-TLS
 [Resolve]
 DNS=1.1.1.1#cloudflare-dns.com 9.9.9.9#dns.quad9.net
@@ -61,20 +46,20 @@ EOF
 systemctl enable --now systemd-resolved
 
 # Firewall
-progress "Installing Firewall (ufw)..."
+_notif_sep "Installing Firewall (ufw)..."
 pacstall ufw
 ufw enable
 systemctl enable ufw
 
 # Battery
 if ls /sys/class/power_supply/BAT* &>/dev/null; then
-    progress "Battery detected installing power saving..."
+    _notif_sep "Battery detected installing power saving..."
     pacstall tlp
     systemctl enable tlp
 fi
 
 # SSD
-progress "SSD..."
+_notif_sep "SSD..."
 ROOT_DEV=$(findmnt -no SOURCE /) # Get the device backing the root filesystem, e.g., /dev/mapper/cryptroot or /dev/sda2
 
 # Strip partition number to get the block device
@@ -96,29 +81,29 @@ if [[ $ROTATIONAL -eq 0 ]]; then
 fi
 
 # Terminal tools
-progress "Installing terminal tools (bash-completion pacman-contrib fastfetch tmux)..."
+_notif_sep "Installing terminal tools (bash-completion pacman-contrib fastfetch tmux)..."
 pacstall bash-completion pacman-contrib fastfetch tmux
 grep -qxF "fastfetch" /etc/bash.bashrc || echo "fastfetch" >> /etc/bash.bashrc
 
 # ext handlers
-progress "Installing ext handlers (wine)..."
+_notif_sep "Installing ext handlers (wine)..."
 pacstall wine
 
 # Sensors
-progress "Installing sensors (lm_sensors acpi acpid)..." 
+_notif_sep "Installing sensors (lm_sensors acpi acpid)..." 
 pacstall lm_sensors acpi acpid 
 systemctl enable acpid
-log "Detecting sensors..."
+_notif "Detecting sensors..."
 sensors-detect --auto
 
 # Networking
-progress "Installing network monitor (vnstat)..."
+_notif_sep "Installing network monitor (vnstat)..."
 pacstall vnstat
 systemctl enable vnstat
 
 # IME
-progress "IME..."
-log "Installing fcitx5..."
+_notif_sep "IME..."
+_notif "Installing fcitx5..."
 pacstall fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
 
 cat <<EOF >> /etc/environment
@@ -132,15 +117,15 @@ SDL_IM_MODULE=fcitx
 GLFW_IM_MODULE=fcitx
 
 EOF
-log "Fcitx 5 IME environment variables set."
+_notif "Fcitx 5 IME environment variables set."
 
 # Fonts
-log "Installing fonts"
+_notif "Installing fonts"
 pacstall noto-fonts noto-fonts-cjk noto-fonts-emoji
 
 # SSH
-progress "SSH..."
-log "Installing OpenSSH..."
+_notif_sep "SSH..."
+_notif "Installing OpenSSH..."
 pacstall openssh fail2ban
 
 # Harden
@@ -151,7 +136,7 @@ sed -i 's/^#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd
 sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 
 # Update firewall
-log "SSH host is disabled and disallowed in UFW by default. 
+_notif "SSH host is disabled and disallowed in UFW by default. 
 This can be manually amended by running 'systemctl enable --now sshd && ufw allow 22/tcp && ufw reload' as superuser.
 A custom port instead of the default 22 is recommended. This can be done by modifying the port in /etc/ssh/sshd_config"
 
@@ -163,12 +148,12 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
     echo "Plasma detected: Running cleanup..."
 
     # Flatpak + Flathub
-    progress "Installing Flatpak + enabling Flathub..."
+    _notif_sep "Installing Flatpak + enabling Flathub..."
     pacstall flatpak
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
     # Remove default editors
-    # progress "Removing unwanted default editors (kate, vim), please install your own..."
+    # _notif_sep "Removing unwanted default editors (kate, vim), please install your own..."
     # pacman -R kate vim
 
     # Define apps
@@ -184,17 +169,17 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
     )
 
     # Install pacman apps
-    progress "Installing pacman apps..."
+    _notif_sep "Installing pacman apps..."
     pacstall "${pacman_apps[@]}"
 
     # Install flatpak apps
-    progress "Installing flatpak apps..."
+    _notif_sep "Installing flatpak apps..."
     flatpak install -y flathub "${flatpak_apps[@]}"
 fi
 
 # Cleanup then done
 pacman -R archpostinstall
 
-log "Arch Linux post install setup complete!" o
+_notif "Arch Linux post install setup complete!" o
 sleep 1; echo "Rebooting in 3..."; sleep 1; echo "\rRebooting in 2..."; sleep 1; echo "\rRebooting in 1..."
 reboot

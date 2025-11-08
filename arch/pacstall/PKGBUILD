@@ -1,13 +1,13 @@
 pkgname=pacstall
-pkgver=1.0.2
-pkgrel=3
+pkgver=1.0.3
+pkgrel=1
 pkgdesc="A simple pacman wrapper for shorthand inside scripts and basic usage"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
-depends=('bash' 'pacman')
+depends=('bash' 'howhow-common' 'pacman')
 source=("pacstall.sh")
-sha256sums=('0ce110a4ee367a7baa6f8dc4d41a2a01900c19e44978c0e1bc4522b0e368548b')
+sha256sums=('d28a997d449e48742e104b8881f87d17de39faeddfabe2e3532042911d19820d')
 
 package() {
   install -Dm755 pacstall.sh "$pkgdir/usr/bin/pacstall"
