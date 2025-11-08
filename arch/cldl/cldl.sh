@@ -29,17 +29,11 @@ done
 $verbose && arguments+=("--verbose")
 URL="${arguments[0]}"
 
-if grep -q "playlist" <<< "$URL"; then
-    outtmpl="%(album,playlist)s/%(playlist_index)s - %(title)s.%(ext)s"
-else
-    outtmpl="%(title)s.%(ext)s"
-fi
-
-# Build yt-dlp command
+cmd+=(-o "%(album,playlist,track,title)s/%(playlist_index,artist,composer,uploader)s - %(title)s.%(ext)s")
 if [[ "$mode" == "audio" ]]; then
-    cmd+=("-f" "bestaudio/best" "-x" "--audio-format" "mp3" "--embed-thumbnail" "-o" "$outtmpl" "$URL")
+    cmd+=("-f" "bestaudio/best" "-x" "--audio-format" "mp3" "--embed-thumbnail" "$URL")
 else
-    cmd+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "mp4" "-o" "$outtmpl" "$URL")
+    cmd+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "mp4" "$URL")
 fi
 
 $verbose && _notif "Executing: '${cmd[*]}'" "+"
