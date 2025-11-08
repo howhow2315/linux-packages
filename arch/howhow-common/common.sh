@@ -40,7 +40,7 @@ _is_root() { (( EUID == 0 )) }
 _require_root() {
     if ! _is_root; then
         if _hascmd sudo; then
-            _notif "This script is running as root via sudo: '$CMD $@'"
+            _notif "This script requires root privileges, running as root via sudo: '$CMD${*:+ $*}'"
             exec sudo "$0" "$@"
         else
             _err "You need to be root to run this script"
@@ -62,7 +62,7 @@ _drop_privileges() {
 _run_as_root() {
     if ! _is_root; then
         if _hascmd sudo; then
-            _notif "Running internal command as root via sudo: '$@'"
+            _notif "Running internal command as root via sudo: '$*'"
             sudo "$@"
         else
             _err "You need to be root to run this script"
