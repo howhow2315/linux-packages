@@ -38,7 +38,7 @@ _hascmd() { command -v "$1" &>/dev/null; }
 _is_root() { (( EUID == 0 )) }
 
 _require_root() {
-    if _is_root; then
+    if ! _is_root; then
         if _hascmd sudo; then
             _notif "This script is running as root via sudo: '$CMD $@'"
             exec sudo "$0" "$@"
@@ -49,7 +49,7 @@ _require_root() {
 }
 
 _drop_privileges() {
-    if (( EUID == 0 )); then
+    if _is_root; then
         _notif "Dropping root privileges, switching to user: '${SUDO_USER:-$(logname)}'"
         if _hascmd sudo && [[ -n "${SUDO_USER:-}" ]]; then
             exec sudo -u "$SUDO_USER" "$0" "$@"
@@ -60,7 +60,7 @@ _drop_privileges() {
 }
 
 _run_as_root() {
-    if _is_root; then
+    if ! _is_root; then
         if _hascmd sudo; then
             _notif "Running internal command as root via sudo: '$@'"
             sudo "$@"
