@@ -2,40 +2,33 @@
 # A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support.
 source /usr/lib/howhow/common.sh
 
-USAGE_ARGS+=("[--audio|--video]" "<URL>")
+USAGE_ARGS+=("FORMAT <URL>")
+USAGE_CMDS+=("yt-dlp --help")
 
 [[ $# -eq 0 ]] && _usage
 
-# Defaults
-flags=()
-arguments=()
-verbose=false
-mode="audio"
-cmd=("yt-dlp" "-U" "--embed-metadata" "--no-overwrites")
+PATH_FMT="%(album,playlist,track,title)s"
+cmd=(
+    "-U" 
+    "--embed-metadata"
+    "--no-overwrites"
+    "--write-thumbnail"
+    "--convert-thumbnails" "jpg"
+    "-o" "$PATH_FMT/%(playlist_index,artist,composer,uploader)s - %(title)s.%(ext)s"
+    "-o" "thumbnail:$PATH_FMT/cover.%(ext)s"
+    '-o' "pl_thumbnail:"
+)
 _hascmd firefox && cmd+=("--cookies-from-browser" "firefox")
-
-# Parse args
-while [[ $# -gt 0 ]]; do
-    case "$1" in
+has_format=false
+for arg in "$@"; do
+    case "$arg" in
+        -t|--audio-format|-f|--format)
+            has_format=true
+            break
+            ;;
         -h|--help) _usage ;;
-        -v|--verbose) verbose=true ;;
-        --video) mode="video" ;;
-        --audio) mode="audio" ;;
-        -*) flags+=("$1 $2"); shift ;;
-        *) arguments+=("$1") ;;
     esac
-    shift
 done
-
-$verbose && arguments+=("--verbose")
-URL="${arguments[0]}"
-
-cmd+=(-o "%(album,playlist,track,title)s/%(playlist_index,artist,composer,uploader)s - %(title)s.%(ext)s")
-if [[ "$mode" == "audio" ]]; then
-    cmd+=("-f" "bestaudio/best" "-x" "--audio-format" "mp3" "--embed-thumbnail" "$URL")
-else
-    cmd+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "mp4" "$URL")
-fi
-
-$verbose && _notif "Executing: '${cmd[*]}'" "+"
-exec "${cmd[@]}"
+! $has_format && cmd+=("-t" "aac") # Add default if no format/preset was provided
+cmd+=("$@")
+yt-dlp "${cmd[@]}" # Run in current shell

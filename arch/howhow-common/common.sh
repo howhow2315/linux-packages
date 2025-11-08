@@ -33,7 +33,13 @@ _err() {
     exit "$code"
 }
 
-_hascmd() { command -v "$1" &>/dev/null; }
+# _silently is initialized dynamically based off the shell
+case "$(basename "$SHELL")" in
+    bash|zsh) _silently() { "$@" &> /dev/null; } ;;
+    *) _silently() { "$@" > /dev/null 2>&1; } ;; # Default to POSIX-compatible syntax
+esac
+
+_hascmd() { _silently command -v "$1"; }
 
 _is_root() { (( EUID == 0 )) }
 
