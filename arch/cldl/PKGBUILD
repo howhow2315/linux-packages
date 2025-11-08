@@ -1,13 +1,13 @@
 pkgname=cldl
 pkgver=1.0.1
-pkgrel=2
+pkgrel=3
 pkgdesc="A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support."
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash' 'howhow-common' 'yt-dlp')
 source=("cldl.sh")
-sha256sums=('3657c39c2b5a0014b0f7b34b4b42d6bbaf70085eb7d544884cf24228294c3829')
+sha256sums=('bcda4e17243b3e5819eacd59bc4feeeffd5c21598e70bbedb7e125123540edf5')
 
 package() {
   install -Dm755 cldl.sh "$pkgdir/usr/bin/cldl"

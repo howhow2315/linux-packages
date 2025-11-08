@@ -11,6 +11,7 @@ flags=()
 arguments=()
 verbose=false
 mode="audio"
+cmd=("yt-dlp" "-U" "--embed-metadata" "--no-overwrites" "--cookies-from-browser" "firefox")
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -29,16 +30,16 @@ $verbose && arguments+=("--verbose")
 URL="${arguments[0]}"
 
 if grep -q "playlist" <<< "$URL"; then
-    outtmpl="%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s"
+    outtmpl="%(album,playlist)s/%(playlist_index)s - %(title)s.%(ext)s"
 else
     outtmpl="%(title)s.%(ext)s"
 fi
 
 # Build yt-dlp command
 if [[ "$mode" == "audio" ]]; then
-    cmd=(yt-dlp -U -f "bestaudio/best" -x --audio-format mp3 --cookies-from-browser firefox --embed-metadata --no-overwrites --embed-thumbnail -o "$outtmpl" "$URL")
+    cmd+=("-f" "bestaudio/best" "-x" "--audio-format" "mp3" "--embed-thumbnail" "-o" "$outtmpl" "$URL")
 else
-    cmd=(yt-dlp -U -f "bestvideo+bestaudio/best" --merge-output-format mp4 --cookies-from-browser firefox --embed-metadata --no-overwrites -o "$outtmpl" "$URL")
+    cmd+=("-f" "bestvideo+bestaudio/best" "--merge-output-format" "mp4" "-o" "$outtmpl" "$URL")
 fi
 
 $verbose && _notif "Executing: '${cmd[*]}'" "+"
