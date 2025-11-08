@@ -7,14 +7,16 @@ USAGE_CMDS+=("yt-dlp --help")
 [[ $# -eq 0 ]] && _usage
 
 PATH_FMT="%(album,playlist,track,title)s"
+NAME_FMT="%(playlist_index,artist,composer,uploader)s"
 cmd=(
     yt-dlp
     "-U" 
+    "--parse-metadata" "%(playlist_index)s:%(track_number)s"
     "--embed-metadata"
     "--no-overwrites"
     "--write-thumbnail"
     "--convert-thumbnails" "jpg"
-    "-o" "$PATH_FMT/%(playlist_index,artist,composer,uploader)s - %(title)s.%(ext)s"
+    "-o" "$PATH_FMT/$NAME_FMT - %(title)s.%(ext)s"
     "-o" "thumbnail:$PATH_FMT/cover.%(ext)s"
     '-o' "pl_thumbnail:"
 )
