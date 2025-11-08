@@ -3,7 +3,7 @@ set -euo pipefail
 CMD=$(basename "$0")
 
 _notif() {
-    local msg="$1" sym=${2:-"*"}
+    local msg="${1:-""}" sym=${2:-"*"}
     [[ -n "$msg" ]] && echo "[$sym] $msg"
 }
 _notif_sep() { 
