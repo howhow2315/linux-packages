@@ -2,13 +2,13 @@
 # A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support.
 source /usr/lib/howhow/common.sh
 
-USAGE_ARGS+=("FORMAT <URL>")
 USAGE_CMDS+=("yt-dlp --help")
 
 [[ $# -eq 0 ]] && _usage
 
 PATH_FMT="%(album,playlist,track,title)s"
 cmd=(
+    yt-dlp
     "-U" 
     "--embed-metadata"
     "--no-overwrites"
@@ -31,4 +31,5 @@ for arg in "$@"; do
 done
 ! $has_format && cmd+=("-t" "aac") # Add default if no format/preset was provided
 cmd+=("$@")
-yt-dlp "${cmd[@]}" # Run in current shell
+echo "Command: ${cmd[@]}"
+"${cmd[@]}" # Run in current shell
