@@ -11,7 +11,8 @@ flags=()
 arguments=()
 verbose=false
 mode="audio"
-cmd=("yt-dlp" "-U" "--embed-metadata" "--no-overwrites" "--cookies-from-browser" "firefox")
+cmd=("yt-dlp" "-U" "--embed-metadata" "--no-overwrites")
+_hascmd firefox && cmd+=("--cookies-from-browser" "firefox")
 
 # Parse args
 while [[ $# -gt 0 ]]; do
