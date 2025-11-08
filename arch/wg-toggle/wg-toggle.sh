@@ -7,16 +7,6 @@ USAGE_MSG="
 Toggle the WireGuard connection for the specified interface.
 By default, the interface 'wg0' will be used and toggled."
 
-# Safely escalate
-_sudo() {
-    if (( EUID != 0 )); then
-        _hascmd sudo && sudo "$@" || _err "You need to be root to run this script"
-    else
-        "$@"
-    fi
-    return 0
-}
-
 # Arguments
 INTERFACE="${2:-"wg0"}"
 ACTION="${1:-"toggle"}"
@@ -29,7 +19,7 @@ updown() {
 enable() {
     if [[ "$(updown)" == "inactive" ]]; then
         _notif "Attempting to bring up '$INTERFACE'..."
-        if _sudo systemctl start "wg-quick@$INTERFACE"; then
+        if _run_as_root systemctl start "wg-quick@$INTERFACE"; then
             _notif "Connection to '$INTERFACE' established" o
             exit 0
         else
@@ -44,7 +34,7 @@ enable() {
 disable() {
     _notif "Attempting to bring down '$INTERFACE'..."
     if [[ "$(updown)" == "active" ]]; then
-        if _sudo systemctl stop "wg-quick@$INTERFACE"; then
+        if _run_as_root systemctl stop "wg-quick@$INTERFACE"; then
             _notif "Connection to '$INTERFACE' successfully terminated" o
             exit 0
         else
@@ -56,12 +46,12 @@ disable() {
     exit 1
 }
 
-[[ "$(updown)" == "failed" ]] && _sudo systemctl restart "wg-quick@$INTERFACE"
+[[ "$(updown)" == "failed" ]] && _run_as_root systemctl restart "wg-quick@$INTERFACE"
 
 # restart if service is stuck
 if [[ "$(updown)" == "failed" ]]; then
     _notif "Restarting failed interface '$INTERFACE'..."
-    _sudo systemctl restart "wg-quick@$INTERFACE"
+    _run_as_root systemctl restart "wg-quick@$INTERFACE"
 fi
 
 toggle() {
