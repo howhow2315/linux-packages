@@ -10,12 +10,14 @@ PATH_FMT="%(album,playlist,track,title)s"
 NAME_FMT="%(playlist_index,artist,composer,uploader)s"
 cmd=(
     yt-dlp
-    "-U" 
+    "-U"
+    # "--skip-download"
     "--parse-metadata" "%(playlist_index)s:%(track_number)s"
     "--embed-metadata"
     "--no-overwrites"
     "--write-thumbnail"
     "--convert-thumbnails" "jpg"
+    --postprocessor-args ThumbnailsConvertor:"-vf \"scale=640:640:force_original_aspect_ratio=increase,crop=640:640\" -q:v 2"
     "-o" "$PATH_FMT/$NAME_FMT - %(title)s.%(ext)s"
     "-o" "thumbnail:$PATH_FMT/cover.%(ext)s"
     '-o' "pl_thumbnail:"
@@ -34,4 +36,4 @@ done
 ! $has_format && cmd+=("-t" "aac") # Add default if no format/preset was provided
 cmd+=("$@")
 echo "Command: ${cmd[@]}"
-"${cmd[@]}" # Run in current shell
+"${cmd[@]}"
