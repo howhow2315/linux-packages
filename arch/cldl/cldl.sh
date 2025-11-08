@@ -4,6 +4,8 @@ source /usr/lib/howhow/common.sh
 
 USAGE_ARGS+=("[--audio|--video]" "<URL>")
 
+[[ $# -eq 0 ]] && _usage
+
 # Defaults
 flags=()
 arguments=()
