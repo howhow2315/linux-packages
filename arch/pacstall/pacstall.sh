@@ -13,7 +13,14 @@ _err() {
     exit "$code"
 }
 _hascmd() { command -v "$1" &>/dev/null; }
-(( EUID != 0 )) && { _hascmd sudo && exec sudo "$0" "$@" || _err "You need to be root to run this script"; }
+if (( EUID != 0 )); then
+    if _hascmd sudo; then
+        _notif "This script is running as root via sudo: '$0 $*'"
+        exec sudo "$0" "$@"
+    else
+        _err "You need to be root to run this script"
+    fi
+fi
 
 USAGE_MSG="Usage: $CMD [operation] [options] [package(s)]...
 Wrapper behavior:

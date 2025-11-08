@@ -11,14 +11,15 @@ _err() {
     _notif "$CMD ERROR: $msg" !
     exit "$code"
 }
-
-[[ $EUID -ne 0 ]] && {
-    if command -v sudo &>/dev/null; then
+_hascmd() { command -v "$1" &>/dev/null; }
+if (( EUID != 0 )); then
+    if _hascmd sudo; then
+        _notif "This script is running as root via sudo: '$0 $*'"
         exec sudo "$0" "$@"
     else
         _err "You need to be root to run this script"
     fi
-}
+fi
 
 ACTION="${1:-}"
 CLIENT_NAME="${2:-}"

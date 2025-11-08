@@ -4,24 +4,31 @@
 #   sudo ./ufw-ipset allow proto tcp from ipset:cloudflare4 to any port 80,443 comment "cloudflare ipv4"
 
 set -euo pipefail
-[[ $EUID -ne 0 ]] && exec sudo "$0" "$@"
+
+_notif() {
+    local msg="$1" sym=${2:-"*"}
+    [[ -n "$msg" ]] && echo "[$sym] $msg"
+}
+CMD=$(basename "$0")
+_err() {
+    local msg="$1" code=${2:-1}
+    _notif "$CMD ERROR: $msg" !
+    exit "$code"
+}
+_hascmd() { command -v "$1" &>/dev/null; }
+if (( EUID != 0 )); then
+    if _hascmd sudo; then
+        _notif "This script is running as root via sudo: '$0 $*'"
+        exec sudo "$0" "$@"
+    else
+        _err "You need to be root to run this script"
+    fi
+fi
 
 CMD=$(basename "$0")
 ARGS=("$@")
 IPSET_NAME=""
 DIRECTION=""
-
-say() {
-    local msg="$1"
-    local sym=${2:-"*"}
-    [[ -n "$msg" ]] && echo "[$sym] $msg"
-}
-
-err() {
-    local msg=${1:-"no error message provided"}
-    say "$CMD Error: $msg" "!"
-    exit 1
-}
 
 # Detect `from ipset:NAME` or `to ipset:NAME`
 for ((i=0; i<${#ARGS[@]}-1; i++)); do
@@ -33,24 +40,24 @@ for ((i=0; i<${#ARGS[@]}-1; i++)); do
         break
     fi
 done
-[[ -z "$IPSET_NAME" ]] && err "No 'from ipset:<name>' or 'to ipset:<name>' found in arguments"
+[[ -z "$IPSET_NAME" ]] && _err "No 'from ipset:<name>' or 'to ipset:<name>' found in arguments"
 
 # Grab IPs from ipset
 if ! ipset list "$IPSET_NAME" >/dev/null 2>&1; then
-    err "ipset '$IPSET_NAME' not found"
+    _err "ipset '$IPSET_NAME' not found"
 fi
 
 IPS=$(ipset list "$IPSET_NAME" | awk '/Members:/ {found=1; next} found {print}')
-[[ -z "$IPS" ]] && err "ipset '$IPSET_NAME' is empty"
+[[ -z "$IPS" ]] && _err "ipset '$IPSET_NAME' is empty"
 
 # Expand: run ufw for each member of the set
 for ip in $IPS; do
-    say "Changing ufw rule for $DIRECTION $ip"
+    _notif "Changing ufw rule for $DIRECTION $ip"
     if ! output=$(ufw "${ARGS[@]}" "$DIRECTION" "$ip" 2>&1); then
-        err "$output"
+        _err "$output"
     fi
 done
 
-say "UFW ipset changes successful" o
-say "UFW verbose status: " i
+_notif "UFW ipset changes successful" o
+_notif "UFW verbose status: " i
 ufw status verbose
