@@ -95,8 +95,8 @@ else
     git add docs/
     git commit -m "Update $REPO_NAME packages on $(date +'%Y-%m-%d %H:%M:%S')"
     
-    read -rp "Push to Git? (Y/n)" pushGit
-    if [[ "$pushGit" == [yY] ]]; then
-        git push origin main
-    fi
+#    read -rp "Push to Git? (Y/n)" pushGit
+#    if [[ "$pushGit" == [yY] ]]; then
+#        git push origin main
+#    fi
 fi

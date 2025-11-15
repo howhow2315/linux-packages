@@ -7,13 +7,18 @@ _require_root "$@"
 _notif_sep "Updating mirrors and upgrading system..."
 _notif "Fetching latest Arch mirrors and syncing package databases..."
 
-reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
+reflector --score 25 --latest 25 --threads 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Syu
 
+# AUR package manager
+pacman -S --noconfirm aurinstall
+aurinstall paru-bin
+pacman -R --noconfirm aurinstall
+
 # Battery
-if ls /sys/class/power_supply/BAT* &>/dev/null; then
+if _silently ls /sys/class/power_supply/BAT*; then
     _notif_sep "Battery detected installing power saving..."
-    pacstall tlp
+    pacman -S --noconfirm tlp
     systemctl enable tlp
 fi
 
@@ -41,12 +46,12 @@ fi
 
 # Terminal tools
 _notif_sep "Installing terminal tools (\fastfetch tmux)..."
-pacstall fastfetch tmux
+pacman -S --noconfirm fastfetch tmux
 grep -qxF "fastfetch" /etc/bash.bashrc || echo "fastfetch" >> /etc/bash.bashrc
 
 # Sensors
 _notif_sep "Installing sensors (lm_sensors acpi acpid)..." 
-pacstall lm_sensors acpi acpid 
+pacman -S --noconfirm lm_sensors acpi acpid 
 systemctl enable acpid
 _notif "Detecting sensors..."
 sensors-detect --auto
@@ -61,11 +66,11 @@ sudo sed -i \
 # Networking
 _notif_sep "Networking..."
 _notif "Installing network monitor (vnstat)..."
-pacstall vnstat
+pacman -S --noconfirm vnstat
 systemctl enable vnstat
 
 _notif "Installing networking tools (wget)..."
-pacstall wget
+pacman -S --noconfirm wget
 
 # Use Encrypted DNS
 _notif_sep "Enabling EDNS..."
@@ -80,7 +85,7 @@ systemctl enable --now systemd-resolved
 
 # Firewall
 _notif_sep "Installing Firewall (ufw)..."
-pacstall ufw
+pacman -S --noconfirm ufw
 
 # ufw-docker support
 if systemctl is-active --quiet docker; then
@@ -94,7 +99,7 @@ ufw --force enable
 systemctl enable --now ufw
 
 # fail2ban
-pacstall fail2ban
+pacman -S --noconfirm fail2ban
 cp -n /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 sed -i '/^\[sshd\]$/a enabled = true' /etc/fail2ban/jail.local
 systemctl enable --now fail2ban
@@ -125,7 +130,14 @@ EOF
 fi
 
 # Cleanup then done
-pacstall -R archserverpostinstall
+_bell
+pacman -R archserverpostinstall
 
 # clear && fastfetch
 _notif "Arch Linux server post install setup complete!" o
+timeleft=3
+while [ $timeleft -gt 0 ]; do
+    echo "Rebooting in $timeleft..."; _bell; sleep 1
+    ((timeleft--)) # decrement the counter
+done
+reboot

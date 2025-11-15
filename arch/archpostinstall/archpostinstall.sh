@@ -7,13 +7,13 @@ _require_root "$@"
 _notif_sep "Updating mirrors and upgrading system..."
 _notif "Fetching latest Arch mirrors and syncing package databases..."
 
-reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
-pacman -Syu --noconfirm
+reflector --score 25 --latest 25 --threads 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+-Syu --noconfirm
 
 # AUR package manager
-# pacstall aur-install
-# aur-install yay
-# pacman -R --noconfirm aur-install
+pacman -S --noconfirm aurinstall
+aurinstall paru-bin
+pacman -R --noconfirm aurinstall
 
 # Add host to hosts
 HOSTNAME=$(cat /etc/hostname)
@@ -47,14 +47,14 @@ systemctl enable --now systemd-resolved
 
 # Firewall
 _notif_sep "Installing Firewall (ufw)..."
-pacstall ufw
+pacman -S --noconfirm ufw
 ufw enable
 systemctl enable ufw
 
 # Battery
-if ls /sys/class/power_supply/BAT* &>/dev/null; then
+if _silently ls /sys/class/power_supply/BAT*; then
     _notif_sep "Battery detected installing power saving..."
-    pacstall tlp
+    pacman -S --noconfirm tlp
     systemctl enable tlp
 fi
 
@@ -82,29 +82,25 @@ fi
 
 # Terminal tools
 _notif_sep "Installing terminal tools (bash-completion pacman-contrib fastfetch tmux)..."
-pacstall bash-completion pacman-contrib fastfetch tmux
+pacman -S --noconfirm bash-completion pacman-contrib fastfetch tmux
 grep -qxF "fastfetch" /etc/bash.bashrc || echo "fastfetch" >> /etc/bash.bashrc
-
-# ext handlers
-_notif_sep "Installing ext handlers (wine)..."
-pacstall wine
 
 # Sensors
 _notif_sep "Installing sensors (lm_sensors acpi acpid)..." 
-pacstall lm_sensors acpi acpid 
+pacman -S --noconfirm lm_sensors acpi acpid 
 systemctl enable acpid
 _notif "Detecting sensors..."
 sensors-detect --auto
 
 # Networking
 _notif_sep "Installing network monitor (vnstat)..."
-pacstall vnstat
+pacman -S --noconfirm vnstat
 systemctl enable vnstat
 
 # IME
 _notif_sep "IME..."
 _notif "Installing fcitx5..."
-pacstall fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
+pacman -S --noconfirm fcitx5-im fcitx5-configtool fcitx5-gtk fcitx5-qt
 
 cat <<EOF >> /etc/environment
 
@@ -121,12 +117,12 @@ _notif "Fcitx 5 IME environment variables set."
 
 # Fonts
 _notif "Installing fonts"
-pacstall noto-fonts noto-fonts-cjk noto-fonts-emoji
+pacman -S --noconfirm noto-fonts noto-fonts-cjk noto-fonts-emoji
 
 # SSH
 _notif_sep "SSH..."
 _notif "Installing OpenSSH..."
-pacstall openssh fail2ban
+pacman -S --noconfirm openssh fail2ban
 
 # Harden
 cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
@@ -144,17 +140,13 @@ systemctl enable --now fail2ban
 ufw reload
 
 # Plasma cleanup
-if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; then
+if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || _silently pgrep -x plasmashell; then
     echo "Plasma detected: Running cleanup..."
 
     # Flatpak + Flathub
     _notif_sep "Installing Flatpak + enabling Flathub..."
-    pacstall flatpak
+    pacman -S --noconfirm flatpak
     flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-    # Remove default editors
-    # _notif_sep "Removing unwanted default editors (kate, vim), please install your own..."
-    # pacman -R kate vim
 
     # Define apps
     pacman_apps=(firefox)
@@ -162,15 +154,13 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
         com.github.tchx84.Flatseal
         it.mijorus.gearlever
         io.github.andreibachim.shortcut
-        # org.videolan.VLC
         org.libreoffice.LibreOffice
-        # com.vscodium.codium
         # org.qbittorrent.qBittorrent
     )
 
     # Install pacman apps
     _notif_sep "Installing pacman apps..."
-    pacstall "${pacman_apps[@]}"
+    pacman -S --noconfirm "${pacman_apps[@]}"
 
     # Install flatpak apps
     _notif_sep "Installing flatpak apps..."
@@ -178,8 +168,13 @@ if [[ "$XDG_CURRENT_DESKTOP" == *"KDE"* ]] || pgrep -x plasmashell &>/dev/null; 
 fi
 
 # Cleanup then done
+_bell
 pacman -R archpostinstall
 
 _notif "Arch Linux post install setup complete!" o
-sleep 1; echo "Rebooting in 3..."; sleep 1; echo "\rRebooting in 2..."; sleep 1; echo "\rRebooting in 1..."
+timeleft=3
+while [ $timeleft -gt 0 ]; do
+    echo "Rebooting in $timeleft..."; _bell; sleep 1
+    ((timeleft--)) # decrement the counter
+done
 reboot

@@ -38,7 +38,7 @@ for package in "${packages[@]}"; do
     _notif "Processing package: $package"
     
     # See if pacman already has the package installed (and optionally prompt reinstall)
-    if pacman -Q "$package" &>/dev/null; then
+    if _silently pacman -Q "$package"; then
         if ! $REINSTALL; then
             _notif "$package already installed. Skipping." o
             continue

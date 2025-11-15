@@ -20,7 +20,7 @@ _notif_clear() {
     _notif "$@"
 }
 
-_bell() { (echo -e '\a') }
+_bell() { (echo -ne '\a') }
 
 USAGE_ARGS=()
 USAGE_MSG=""
