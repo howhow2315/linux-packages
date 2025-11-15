@@ -1,7 +1,6 @@
 #!/bin/bash
 # Arch Linux System Maintenance Script
 source /usr/lib/howhow/common.sh
-_require_root "$@"
 
 _notif "Starting system maintenance..."
 
@@ -9,54 +8,38 @@ _notif "Starting system maintenance..."
 if _hascmd reflector; then
     timestamp=$(grep '^# When:' /etc/pacman.d/mirrorlist | cut -d ':' -f2- | xargs)
     elapsed=$(( $(date -u +%s) - $(date -d "$timestamp" +%s) ))
-    # _notif "Reflector last ran $elapsed seconds ago" i
 
-    TWO_HOURS="$((60*60*2))"
-    if (( elapsed > TWO_HOURS )); then
-        _notif "Updating mirrorlist with reflector this may take a while..."
-        reflector --latest 20 --threads 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist &>/dev/null
+    hours=$(( elapsed / 3600 ))
+    minutes=$(( (elapsed % 3600) / 60 ))
+    seconds=$(( elapsed % 60 ))
+    _notif "'reflector' last ran ${hours}h ${minutes}m ${seconds}s ago" i
+
+    DAY_IN_SECONDS="$((60*60*24))"
+    if (( elapsed > $DAY_IN_SECONDS )); then
+        _notif "Updating mirrorlist with 'reflector' this may take a while..."
+        _run_as_root reflector --score 25 --latest 25 --threads 10 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
     fi
 fi
 
 # Update system packages
-_notif "Updating official packages..."
-pacman -Syu --noconfirm || _notif "Official package update failed or no updates found." "!"
-_notif "Official packages are up to date." o
+if _hascmd paru; then
+    _notif "Updating system packages via paru..."
+    paru
+# elif _hascmd yay; then
+#     yay -Syu --noconfirm
+else
+    _notif "Updating system packages via pacman..."
+    _run_as_root pacman -Syu --noconfirm || _notif "System package update failed or no updates found." "!"
+fi
+_notif "System packages are up to date." o
+
+if _hascmd flatpak; then
+    _notif "Updating flatpack apps..."
+    flatpak update -y
+fi
 
 # Cleanup cache
 _notif "Cleaning package cache..."
 paccache -rk2 && _notif "Cache cleaned." o || _notif "Failed to clean cache" !
-
-# If an AUR helper is available, use it to update AUR packages
-update_aur() {
-    local user="$1"
-    for aur_helper in yay paru; do
-        if sudo -u "$user" command -v "$aur_helper" &>/dev/null; then
-            _notif "Updating AUR packages for user $user with $aur_helper..."
-            if sudo -u "$user" "$aur_helper" -Syu --noconfirm; then
-                _notif "Finished updating AUR packages for $user." o
-            else
-                _notif "No AUR updates available for $user." o
-            fi
-            return 0
-        fi
-    done
-    _notif "No AUR helper found for $user. Skipping..."
-}
-
-# Detect if running interactively or by service
-INTERACTIVE=false
-[[ -t 0 && -t 1 ]] && INTERACTIVE=true
-
-if $INTERACTIVE; then
-    update_aur "${SUDO_USER:-$(logname)}"
-else  # Example: Running via systemd and acting as pure root
-    _notif "Updating AUR packages for all users with AUR helpers..."
-    users=$(awk -F: '($3 >= 1000) && ($7 !~ /(nologin|false)$/) {print $1}' /etc/passwd)
-    for user in $users; do
-        _notif "Processing user: $user"
-        update_aur "$user"
-    done
-fi
 
 _notif "$CMD complete!" o
