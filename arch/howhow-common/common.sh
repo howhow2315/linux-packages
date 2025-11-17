@@ -1,3 +1,4 @@
+#!/bin/bash
 set -euo pipefail
 
 CMD=$(basename "$0")
