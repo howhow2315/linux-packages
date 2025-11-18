@@ -1,6 +1,6 @@
 pkgname=ufw-ipset
 pkgver=1.0.1
-pkgrel=1
+pkgrel=3
 pkgdesc="A ipset ufw wrapper to manage ipsets with ufw"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"

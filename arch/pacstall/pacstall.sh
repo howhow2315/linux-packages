@@ -2,7 +2,7 @@
 # A simple pacman wrapper for shorthand inside scripts and basic usage
 source /usr/lib/howhow/common.sh
 
-_notif "Deprecated: Please use paru instead" !
+_notif "Deprecated: Please use 'paru' instead" !
 
 USAGE_ARGS+=("[operation]" "[options]" "[package(s)]")
 USAGE_MSG="

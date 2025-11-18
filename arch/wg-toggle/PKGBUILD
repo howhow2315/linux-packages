@@ -1,6 +1,6 @@
 pkgname=wg-toggle
 pkgver=1.0.3
-pkgrel=2
+pkgrel=4
 pkgdesc="Command-line tool & .desktop to easily toggle WireGuard interfaces"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"

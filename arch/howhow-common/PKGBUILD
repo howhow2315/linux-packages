@@ -1,13 +1,13 @@
 pkgname=howhow-common
 pkgver=1.0.2
-pkgrel=2
+pkgrel=4
 pkgdesc="A source env for a majority of my scripts for DRY and safety."
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
 license=('MIT')
 depends=('bash')
 source=("common.sh")
-sha256sums=('c877fad9ae78f9b30e53b544e1edd621afc10b389ad9cb1b8789d4871a3eff55')
+sha256sums=('dd26b751a671d67b88f7903c49be437975dbf663558dfc8fd1e11659eb80c48f')
 
 package() {
     install -Dm644 "$srcdir/common.sh" "$pkgdir/usr/lib/howhow/common.sh"

@@ -1,6 +1,6 @@
 pkgname=sysm
 pkgver=1.1.2
-pkgrel=1
+pkgrel=3
 pkgdesc="Arch Linux system maintenance script"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"
@@ -11,7 +11,7 @@ optdepends=(
   'paru: Alternative AUR helper'
 )
 source=('sysm.sh')
-sha256sums=('82553a9d14d023679e8f101ddda89e4490226f21f89d70592e0d12974514cc0a')
+sha256sums=('a45f5204b284612cefe35767bc865194cf6a84ad7a72774aeeeef727845da557')
 
 package() {
   install -Dm755 sysm.sh "$pkgdir/usr/bin/sysm"

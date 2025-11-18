@@ -1,6 +1,6 @@
 #!/bin/bash
-# Arch Linux System Maintenance Script
 source /usr/lib/howhow/common.sh
+_drop_privileges "$@"
 
 _notif "Starting system maintenance..."
 
@@ -25,8 +25,6 @@ fi
 if _hascmd paru; then
     _notif "Updating system packages via paru..."
     paru
-# elif _hascmd yay; then
-#     yay -Syu --noconfirm
 else
     _notif "Updating system packages via pacman..."
     _run_as_root pacman -Syu --noconfirm || _notif "System package update failed or no updates found." "!"
@@ -36,10 +34,17 @@ _notif "System packages are up to date." o
 if _hascmd flatpak; then
     _notif "Updating flatpack apps..."
     flatpak update -y
+
+    _notif "Clearing flatpack cache..."
+    flatpak uninstall --unused
+    flatpak repair --user
 fi
 
 # Cleanup cache
-_notif "Cleaning package cache..."
-paccache -rk2 && _notif "Cache cleaned." o || _notif "Failed to clean cache" !
+if _hascmd paccache; then
+    _notif "Cleaning package cache..."
+    paccache -rk2 && _notif "Cache cleaned." o || _notif "Failed to clean cache" !
+fi
 
+_bell
 _notif "$CMD complete!" o

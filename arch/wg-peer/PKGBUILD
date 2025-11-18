@@ -1,6 +1,6 @@
 pkgname=wg-peer
 pkgver=1.0.2
-pkgrel=1
+pkgrel=3
 pkgdesc="Command-line tool to manage WireGuard peers"
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"

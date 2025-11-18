@@ -1,6 +1,6 @@
 pkgname=cldl
 pkgver=1.0.5
-pkgrel=1
+pkgrel=3
 pkgdesc="A yt-dlp wrapper that downloads videos as MP4 or extracts audio as MP3 with metadata, thumbnails, and playlist support."
 arch=('any')
 url="https://github.com/howhow2315/linux-packages"

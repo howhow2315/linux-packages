@@ -1,3 +1,4 @@
 No README.md
 
-stale for the time being
+> [!WARNING]
+> Outdated: stale for the time being
