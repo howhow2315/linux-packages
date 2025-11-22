@@ -6,7 +6,7 @@ Arch Linux package repo containing utility scripts. The goal is to make 'easy to
 > Originally this was supposed to be an Arch/Ubuntu Linux package repo.  
 > However its moved to a fully Arch one as I've lost reason to build for Ubuntu.
 
-# Add the custom pacman repo [howhow]
+### Add the custom pacman repo [howhow]
 ```sh
 grep -i "howhow" /etc/pacman.conf &>/dev/null || _silently sudo tee -a /etc/pacman.conf <<'EOF'
 
